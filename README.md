@@ -6,6 +6,7 @@ lazyval
 Inspired by the wonderful ideas in schema and flatland: 
 
 https://github.com/halst/schema
+
 http://discorporate.us/projects/flatland/
 
 many of which I outright stole.
