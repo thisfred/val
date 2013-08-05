@@ -17,16 +17,16 @@ I have not optimized much, but for the kind of schemas I need it's around 10x fa
 
 The schemas understood by lazyval are very similar to the ones in schema, but without the need for a class:
 
-  lazy_schema = {
-      Optional('invisible'): bool,
-      Optional('immutable'): bool,
-      Optional('favorite_colors'): [str],
-      Optional('favorite_foods'): [str],
-      Optional('lucky_number'): [int, None],
-      Optional('shoe_size'): int,
-      Optional('mother'): {
-          'name': str,
-          'nested': {'id': str}},
-      Optional('father'): {
-          'name': str,
-          'nested': {'id': str}}}
+    lazy_schema = {
+        Optional('invisible'): bool,
+        Optional('immutable'): bool,
+        Optional('favorite_colors'): [str],
+        Optional('favorite_foods'): [str],
+        Optional('lucky_number'): [int, None],
+        Optional('shoe_size'): int,
+        Optional('mother'): {
+            'name': str,
+            'nested': {'id': str}},
+        Optional('father'): {
+            'name': str,
+            'nested': {'id': str}}}
