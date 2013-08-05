@@ -19,8 +19,8 @@ I have not optimized much, but for the kind of schemas I need (specifically: to 
 The schemas understood by lazyval are very similar to the ones in schema, but without the need for a class:
 
     lazy_schema = {
-        Optional('invisible'): bool,
-        Optional('immutable'): bool,
+        'invisible': bool,
+        'immutable': bool,
         Optional('favorite_colors'): [str],
         Optional('favorite_foods'): [str],
         Optional('lucky_number'): Or(int, None),
