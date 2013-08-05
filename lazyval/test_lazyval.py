@@ -1,4 +1,4 @@
-from lazyval import validate, validates, NotValid, Optional
+from lazyval import validate, validates, NotValid, Optional, Or
 from unittest import TestCase
 
 lazy_schema = {
@@ -6,7 +6,7 @@ lazy_schema = {
     Optional('immutable'): bool,
     Optional('favorite_colors'): [str],
     Optional('favorite_foods'): [str],
-    Optional('lucky_number'): [int, None],
+    Optional('lucky_number'): Or(int, None),
     Optional('shoe_size'): int,
     Optional('mother'): {
         'name': str,

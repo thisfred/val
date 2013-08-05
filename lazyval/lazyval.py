@@ -11,6 +11,15 @@ class Optional(object):
         return "<%s>" % (self.value,)
 
 
+class Or(object):
+
+    def __init__(self, *values):
+        self.values = values
+
+    def __str__(self):
+        return " or ".join(["<%s>" % (v,) for v in self.values])
+
+
 def dict_validate(schema_mandatory, schema_optional, schema_types, key, value):
     if key in schema_mandatory:
         return validate(schema_mandatory[key], value)
@@ -51,6 +60,16 @@ def validates(schema, data):
 
 
 def validate(schema, data):
+
+    if isinstance(schema, Or):
+        for sub_schema in schema.values:
+            try:
+                return validate(sub_schema, data)
+
+            except NotValid:
+                pass
+        raise NotValid('%r not validated by %s' % (data, schema))
+
     if type(schema) is type:
         if isinstance(data, schema):
             return data
