@@ -1,0 +1,4 @@
+lazyval
+=======
+
+Functional schema validator
