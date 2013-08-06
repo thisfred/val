@@ -20,7 +20,18 @@ class Or(object):
         return " or ".join(["<%s>" % (v,) for v in self.values])
 
 
-def dict_validate(schema_mandatory, schema_optional, schema_types, key, value):
+def parse_schema(schema):
+    return schema
+
+
+class Schema(object):
+
+    def __init__(self, schema):
+        self.schema = parse_schema(schema)
+
+
+def _dict_item_validate(schema_mandatory, schema_optional, schema_types, key,
+                        value):
     if key in schema_mandatory:
         return validate(schema_mandatory[key], value)
 
@@ -38,7 +49,7 @@ def dict_validate(schema_mandatory, schema_optional, schema_types, key, value):
     raise NotValid('key %r not matched' % (key,))
 
 
-def list_validate(schema, value):
+def _list_item_validate(schema, value):
     if value in schema:
         return value
 
@@ -97,7 +108,7 @@ def validate(schema, data):
 
             schema_mandatory[key] = value
         for key, val in data.items():
-            validated[key] = dict_validate(
+            validated[key] = _dict_item_validate(
                 schema_mandatory, schema_optional, schema_types, key, val)
             if key in not_seen:
                 not_seen.remove(key)
@@ -108,13 +119,10 @@ def validate(schema, data):
         return validated
 
     if type(data) is list:
-        return [list_validate(schema, i) for i in data]
-
-    if type(schema) is list:
-        return list_validate(schema, data)
+        return [_list_item_validate(schema, i) for i in data]
 
     if type(data) is type(schema):
         if data == schema:
             return data
 
-        raise NotValid('%r is not equal to %s' % (data, schema))
+    raise NotValid('%r is not equal to %s' % (data, schema))

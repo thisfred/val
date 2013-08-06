@@ -89,7 +89,10 @@ class TestLazyval(TestCase):
         self.assertTrue(validates([str, int], ['1', '2', 3]))
 
     def test_list_schema(self):
-        self.assertTrue(validates(['1', '2', '3'], '1'))
+        self.assertFalse(validates(['1', '2', '3'], '1'))
+
+    def test_or(self):
+        self.assertTrue(validates(Or('1', '2', '3'), '1'))
 
     def test_list_schema_not_found(self):
         self.assertFalse(validates(['1', '2', '3'], '12'))
