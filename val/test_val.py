@@ -1,5 +1,5 @@
 from tempfile import mkstemp
-from lazyval import validate, validates, NotValid, Optional, Or, Schema
+from val import validate, validates, NotValid, Optional, Or, Schema
 from unittest import TestCase
 from hotshot import Profile, stats
 
