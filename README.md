@@ -1,7 +1,7 @@
-lazyval
-=======
+val
+===
 
-(Somewhat) functional schema validator, though the lazy applies more to the developer than the implementation.
+(Somewhat) functional schema validator.
 
 Inspired by some of the wonderful ideas in schema and flatland: 
 
@@ -19,7 +19,7 @@ I have not optimized much, but for the kind of schemas I need (specifically: to 
 
 The schemas understood by lazyval are very similar to the ones in schema, but without the need for a class in case of a one off:
 
-    lazy_schema = {
+    schema = {
         'invisible': bool,
         'immutable': bool,
         Optional('favorite_colors'): [str],
@@ -33,20 +33,20 @@ The schemas understood by lazyval are very similar to the ones in schema, but wi
             'name': str,
             'nested': {'id': str}}}
     
-    result = validate(lazy_schema, some_value)
+    result = validate(schema, some_value)
     # result will be the validated value, or a NotValid exception will be raised.
-    result = validates(lazy_schema, some_value)
+    result = validates(schema, some_value)
     # result will be True or False depending on whether some_value was valid for the schema.
     
 When the same schema is reused to validate multiple inputs, it can be instantiated with the Schema() class, which will do some preprocessing to make validation faster.
 
-    lazy_schema = Schema({
+    schema = Schema({
         'key': int,
         str: object})
     
-    result = lazy_schema.validate(some_value)
+    result = schema.validate(some_value)
     # result will be the validated value, or a NotValid exception will be raised.
-    result = lazy_schema.validates(some_value)
+    result = schema.validates(some_value)
     # result will be True or False depending on whether some_value was valid for the schema.
 
 Elements that can occur in a schema are: 
