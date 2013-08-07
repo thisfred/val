@@ -1,7 +1,8 @@
 val
 ===
+![val](http://smartassradio.com/wp-content/gallery/site-images/fat-val-kilmer.jpg)
 
-(Somewhat) functional schema validator.
+A validator for arbitrary Python objects.
 
 Inspired by some of the wonderful ideas in schema and flatland: 
 
@@ -17,9 +18,9 @@ Current status is: use at your peril, everything subject to change.
 
 I have not optimized much, but for the kind of schemas I need (specifically: to validate JSON that has been loaded into python structures,) I have extremely anecdotal evidence that it's around 10x faster than both schema and flatland. (Again, that is mostly because it does way less, and I intend to keep it that way.)
 
-The schemas understood by lazyval are very similar to the ones in schema, but without the need for a class in case of a one off:
+The schemas understood by lazyval are very similar to the ones in schema:
 
-    schema = {
+    schema = Schema({
         'invisible': bool,
         'immutable': bool,
         Optional('favorite_colors'): [str],
@@ -31,18 +32,7 @@ The schemas understood by lazyval are very similar to the ones in schema, but wi
             'nested': {'id': str}},
         Optional('father'): {
             'name': str,
-            'nested': {'id': str}}}
-    
-    result = validate(schema, some_value)
-    # result will be the validated value, or a NotValid exception will be raised.
-    result = validates(schema, some_value)
-    # result will be True or False depending on whether some_value was valid for the schema.
-    
-When the same schema is reused to validate multiple inputs, it can be instantiated with the Schema() class, which will do some preprocessing to make validation faster.
-
-    schema = Schema({
-        'key': int,
-        str: object})
+            'nested': {'id': str}}})
     
     result = schema.validate(some_value)
     # result will be the validated value, or a NotValid exception will be raised.
