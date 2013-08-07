@@ -52,8 +52,8 @@ When the same schema is reused to validate multiple inputs, it can be instantiat
 Elements that can occur in a schema are: 
 
   * simple literal values that will match equal values: 
-    * 12, will match 12
-    * 'foo' will match 'foo'
+    * `12`, will match `12`
+    * `'foo'` will match `'foo'`
   * types that will match anything that is an instance of the type: 
     * int, will match 12
     * str, will match 'foo'
