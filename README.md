@@ -55,18 +55,17 @@ Elements that can occur in a schema are:
     * `12`, will match `12`
     * `'foo'` will match `'foo'`
   * types that will match anything that is an instance of the type: 
-    * int, will match 12
-    * str, will match 'foo'
-    * list, will match [12, 'foo']
-    * dict, will match {'foo': 12}
-    * object, will mathc any object, so all of the above and more
+    * `int`, will match `12`
+    * `str`, will match `'foo'`
+    * `list`, will match `[12, 'foo']`
+    * `dict`, will match `{'foo': 12}`
+    * `object`, will match any object, so all of the above and more
   * lists of elements that will match list values all of whose elements are validated by one of the elements in the elements in the list: 
-    * [str, int], will match [12, 'foo', 'bar', 'baz', 42]
-    * ['foo', 'bar', 13], will match ['foo'] and ['foo', 13] and ['bar', 'bar', 13, 'bar'], etc,
-  * dictionaries with elments as keys and values, that will match dictionaries all of whose key value pairs are matched by one of the key value pairs in the schema:
-    * {'foo': int, str: int} will match {'foo': 83} and {'foo': 12, 'bar': 888, 'baz': 299}, but not {'foo': 'bar'} or {'foo': 21, 12: 'bar'}
-  * Or(element1, element2, ...) will match a value that matches any of the elements passed into the Or.
-    * Or('foo', int) matches 'foo', or 12, or 54, etc. 
-  * {Optional(simple_literal_key): value} will match any key value pair that matches simple_literal_key: value but the schema will still validate dictionary values with no matching key value pair.
-    * {Optional('foo'): 12} matches {'foo': 12} and {} and {'bar': whatever} but not {'foo': 13} or {'foo': 'bar'}
-
+    * `[str, int]`, will match `[12, 'foo', 'bar', 'baz', 42]`
+    * `['foo', 'bar', 13]`, will match `['foo']` and `['foo', 13]` and `['bar', 'bar', 13, 'bar']`, etc,
+  * dictionaries with elements as keys and values, that will match dictionaries all of whose key value pairs are matched by one of the key value pairs in the schema:
+    * `{'foo': int, str: int}` will match `{'foo': 83}` and `{'foo': 12, 'bar': 888, 'baz': 299}`, but not `{'foo': 'bar'}` or `{'foo': 21, 12: 'bar'}`
+  * `Or(element1, element2, ...)` will match a value that matches any of the elements passed into the Or.
+    * `Or('foo', int)` matches `'foo'`, or `12`, or `54`, etc. 
+  * `{Optional(simple_literal_key): value}` will match any key value pair that matches `simple_literal_key: value` but the schema will still validate dictionary values with no matching key.
+    * `{Optional('foo'): 12}` matches `{'foo': 12}` and `{}` and `{-12.99: 'whatever'}` but not `{'foo': 13}` or `{'foo': 'bar'}`
