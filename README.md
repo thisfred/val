@@ -11,7 +11,7 @@ http://discorporate.us/projects/flatland/
 
 many of which I outright stole.
 
-The goal is to make validation faster, while keeping the very pythonic and minimal schema style, at the expense of more advanced features in schema.
+The goal is to make validation faster than either, while keeping the very pythonic and minimal style of schema, at the expense of more advanced features.
 
 Current status is: use at your peril, everything subject to change.
 
