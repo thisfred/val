@@ -3,7 +3,7 @@ lazyval
 
 (Somewhat) functional schema validator, though the lazy applies more to the developer than the implementation.
 
-Inspired by the wonderful ideas in schema and flatland: 
+Inspired by some of the wonderful ideas in schema and flatland: 
 
 https://github.com/halst/schema
 
