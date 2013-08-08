@@ -64,4 +64,4 @@ Elements that can occur in a schema are:
   * `And(element1, element2, ...)` will validate a value validated by all of the elements passed into the And.
     * `And(Convert(int), lambda x: x < 12, lambda x: x >= 3)` will validate `'3'` and return `3` or `11.6` and return `11`, but not `'12'`, `42.77`, or `'foo'` 
   * `{Optional(simple_literal_key): value}` will match any key value pair that matches `simple_literal_key: value` but the schema will still validate dictionary values with no matching key.
-    * `{Optional('foo'): 12}` matches `{'foo': 12}` and `{}` and `{-12.99: 'whatever'}` but not `{'foo': 13}` or `{'foo': 'bar'}`
+    * `{Optional('foo'): 12}` matches `{'foo': 12}` and `{}` but not `{'foo': 13}` or `{'foo': 'bar'}`
