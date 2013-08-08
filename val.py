@@ -16,7 +16,7 @@ class Optional(object):
         self.value = value
 
     def __str__(self):
-        return "<%s>" % (self.value,)
+        return "<Optional: %s>" % (self.value,)
 
 
 class Or(object):
@@ -25,7 +25,7 @@ class Or(object):
         self.values = values
 
     def __str__(self):
-        return " or ".join(["<%s>" % (v,) for v in self.values])
+        return "<%s>" % (" or ".join(["%s" % (v,) for v in self.values]),)
 
 
 class And(object):
@@ -34,7 +34,7 @@ class And(object):
         self.values = values
 
     def __str__(self):
-        return " or ".join(["<%s>" % (v,) for v in self.values])
+        return "<%s>" % (" and ".join(["%s" % (v,) for v in self.values]),)
 
 
 class Check(object):
