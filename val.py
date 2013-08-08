@@ -23,32 +23,31 @@ class Or(object):
         return " or ".join(["<%s>" % (v,) for v in self.values])
 
 
-def _dict_item_validate(schema_optional, schema_types, key, value):
-    if key in schema_optional:
-        return validate(schema_optional[key], value)
+class And(object):
 
-    for schema_key, schema_value in schema_types.items():
-        if not isinstance(key, schema_key):
-            continue
-        try:
-            return validate(schema_value, value)
-        except NotValid:
-            continue
+    def __init__(self, *values):
+        self.values = values
 
-    raise NotValid('key %r not matched' % (key,))
+    def __str__(self):
+        return " or ".join(["<%s>" % (v,) for v in self.values])
 
 
-def _list_item_validate(schema, value):
-    if value in schema:
-        return value
+class Check(object):
 
-    for sub in schema:
-        try:
-            return validate(sub, value)
+    def __init__(self, condition):
+        self.condition = condition
 
-        except NotValid:
-            pass
-    raise NotValid('%r not validated by anything in %s.' % (value, schema))
+    def __str__(self):
+        return '<Check: %r>' % (self.condition,)
+
+
+class Convert(object):
+
+    def __init__(self, conversion):
+        self.convert = conversion
+
+    def __str__(self):
+        return '<Convert: %r>' % (self.convert,)
 
 
 def _schema_list_item_validate(sub_schemas, value):
@@ -63,86 +62,7 @@ def _schema_list_item_validate(sub_schemas, value):
         value, sub_schemas))
 
 
-def validates(schema, data):
-    try:
-        validate(schema, data)
-        return True
-    except NotValid:
-        return False
-
-
-def validate(schema, data):
-
-    if isinstance(schema, Or):
-        for sub_schema in schema.values:
-            try:
-                return validate(sub_schema, data)
-
-            except NotValid:
-                pass
-        raise NotValid('%r not validated by %s' % (data, schema))
-
-    if type(schema) is type:
-        if isinstance(data, schema):
-            return data
-
-        raise NotValid('%r is not of type %s' % (data, schema))
-
-    if isinstance(schema, dict):
-        if not isinstance(data, dict):
-            raise NotValid('%r is not of type dict', (data,))
-        validated = {}
-        optional = {}
-        mandatory = {}
-        types = {}
-        for key, value in schema.items():
-            if isinstance(key, Optional):
-                optional[key.value] = value
-                continue
-
-            if type(key) is type:
-                types[key] = value
-                continue
-
-            mandatory[key] = value
-        to_validate = data.keys()
-        for key, sub_schema in mandatory.items():
-            if key not in data:
-                raise NotValid('missing key: %s' % (key,))
-            validated[key] = validate(sub_schema, data[key])
-            to_validate.remove(key)
-        for key in to_validate:
-            validated[key] = _dict_item_validate(
-                optional, types, key, data[key])
-
-        return validated
-
-    if type(data) is list:
-        if not isinstance(data, list):
-            raise NotValid('%r is not of type list', (data,))
-
-        return [_list_item_validate(schema, i) for i in data]
-
-    if data == schema:
-        return data
-
-    raise NotValid('%r is not equal to %s' % (data, schema))
-
-
 def parse_schema(schema):
-    if isinstance(schema, Or):
-        sub_schemas = [parse_schema(v) for v in schema.values]
-
-        def or_validator(data):
-            for schema in sub_schemas:
-                try:
-                    return schema(data)
-                except NotValid:
-                    pass
-            raise NotValid('%r not validated by %s' % (data, schema))
-
-        return or_validator
-
     if type(schema) is type:
 
         def type_validator(data):
@@ -204,19 +124,65 @@ def parse_schema(schema):
 
         return dict_validator
 
-    if isinstance(schema, list):
+    if type(schema) in (list, tuple, set):
 
         sub_schemas = [parse_schema(s) for s in schema]
 
         def list_validator(data):
-            if not isinstance(data, list):
-                raise NotValid('%r is not of type list', (data,))
+            if not type(data) is type(schema):
+                raise NotValid('%r is not of type %s', (data, type(schema)))
 
-            return [
+            return type(schema)([
                 _schema_list_item_validate(sub_schemas, value)
-                for value in data]
+                for value in data])
 
         return list_validator
+
+    if callable(schema):
+
+        def callable_validator(data):
+            try:
+                if schema(data):
+                    return data
+                else:
+                    raise NotValid('%r does not satisfy %s' % (data, schema))
+            except (TypeError, ValueError), e:
+                raise NotValid(e)
+
+        return callable_validator
+
+    if isinstance(schema, And):
+        sub_schemas = [parse_schema(v) for v in schema.values]
+
+        def and_validator(data):
+            for sub in sub_schemas:
+                data = sub(data)
+            return data
+
+        return and_validator
+
+    if isinstance(schema, Or):
+        sub_schemas = [parse_schema(v) for v in schema.values]
+
+        def or_validator(data):
+            for sub in sub_schemas:
+                try:
+                    return sub(data)
+                except NotValid:
+                    pass
+            raise NotValid('%r not validated by %s' % (data, schema))
+
+        return or_validator
+
+    if isinstance(schema, Convert):
+
+        def conversion_validator(data):
+            try:
+                return schema.convert(data)
+            except (TypeError, ValueError), e:
+                raise NotValid(e)
+
+        return conversion_validator
 
     def static_validator(data):
         if data == schema:

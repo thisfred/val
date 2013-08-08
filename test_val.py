@@ -1,5 +1,5 @@
 from tempfile import mkstemp
-from val import validate, validates, NotValid, Optional, Or, Schema
+from val import NotValid, Optional, Or, And, Schema, Convert
 from unittest import TestCase
 from hotshot import Profile, stats
 
@@ -48,129 +48,72 @@ INVALID_TEST_DATA = {
 class TestLazyval(TestCase):
 
     def test_identity(self):
-        self.assertEquals(validate('test', 'test'), 'test')
-
-    def test_identity_schema(self):
         schema = Schema('test')
         self.assertEquals(schema.validate('test'), 'test')
 
     def test_non_identity(self):
-        self.assertRaises(NotValid, validate, 'foo', 'bar')
-
-    def test_non_identity_schema(self):
         schema = Schema('test')
         self.assertRaises(NotValid, schema.validate, 'bar')
 
-    def test_validates_true(self):
-        self.assertEquals(validates('foo', 'foo'), True)
-
-    def test_validates_false(self):
-        self.assertEquals(validates('foo', 'bar'), False)
-
     def test_type_check(self):
-        self.assertEquals(validate(str, 'test'), 'test')
-
-    def test_type_check_schema(self):
         schema = Schema(str)
         self.assertEquals(schema.validate('test'), 'test')
 
     def test_failing_type_check(self):
-        self.assertRaises(NotValid, validate, int, 'test')
-
-    def test_failing_type_check_schema(self):
         schema = Schema(int)
         self.assertRaises(NotValid, schema.validate, 'test')
 
     def test_dictionary(self):
-        self.assertEquals(
-            validate({'key': str}, {'key': 'val'}), {'key': 'val'})
-
-    def test_dictionary_schema(self):
         schema = Schema({'key': str})
         self.assertEquals(schema.validate({'key': 'val'}), {'key': 'val'})
 
     def test_dictionary_optional(self):
-        self.assertEquals(
-            validate({'key': str, Optional('key2'): str}, {'key': 'val'}),
-            {'key': 'val'})
-
-    def test_dictionary_optional_schema(self):
         schema = Schema({'key': str, Optional('key2'): str})
         self.assertEquals(schema.validate({'key': 'val'}), {'key': 'val'})
 
     def test_dictionary_wrong_key(self):
-        self.assertRaises(NotValid, validate, {'key': str}, {'not_key': 'val'})
-
-    def test_dictionary_wrong_key_schema(self):
         schema = Schema({'key': str})
         self.assertRaises(NotValid, schema.validate, {'not_key': 'val'})
 
     def test_dictionary_missing_key(self):
-        self.assertRaises(
-            NotValid, validate, {'key': str, 'key2': str}, {'key': 'val'})
-
-    def test_dictionary_missing_key_schema(self):
         schema = Schema({'key': str, 'key2': str})
         self.assertRaises(NotValid, schema.validate, {'key': 'val'})
 
     def test_list_data(self):
-        self.assertTrue(validates([str], ['1', '2', '3']))
-
-    def test_list_data_schema(self):
         schema = Schema([str])
         self.assertTrue(schema.validates(['1', '2', '3']))
 
     def test_list_data_wrong_type(self):
-        self.assertFalse(validates([str], ['1', '2', 3]))
-
-    def test_list_data_wrong_type_schema(self):
         schema = Schema([str])
         self.assertFalse(schema.validates(['1', '2', 3]))
 
     def test_list_data_multiple_types(self):
-        self.assertTrue(validates([str, int], ['1', '2', 3]))
-
-    def test_list_data_multiple_types_schema(self):
         schema = Schema([str, int])
         self.assertTrue(schema.validates(['1', '2', 3]))
 
     def test_not_list(self):
-        self.assertFalse(validates(['1', '2', '3'], '1'))
-
-    def test_not_list_schema(self):
         schema = Schema(['1', '2', '3'])
         self.assertFalse(schema.validates('1'))
 
-    def test_or(self):
-        self.assertTrue(validates(Or('1', '2', '3'), '1'))
-
-    def test_or_schema(self):
-        schema = Schema(Or('1', '2', '3'))
-        self.assertTrue(schema.validates('1'))
-
     def test_list_not_found(self):
-        self.assertFalse(validates(['1', '2', '3'], '12'))
-
-    def test_list_not_found_schema(self):
         schema = Schema(['1', '2', '3'])
         self.assertFalse(schema.validates('12'))
 
-    def test_dont_care_values_in_dict(self):
-        self.assertEquals(
-            validate(
-                {'foo': int,
-                 'bar': str,
-                 str: object},
-                {'foo': 12,
-                 'bar': 'bar',
-                 'qux': 'baz',
-                 'fnord': [1, 2, 'donkey kong']}),
-            {'foo': 12,
-             'bar': 'bar',
-             'qux': 'baz',
-             'fnord': [1, 2, 'donkey kong']})
+    def test_or(self):
+        schema = Schema(Or(1, str, Convert(lambda x: int(x))))
+        self.assertEquals(schema.validate(1), 1)
+        self.assertEquals(schema.validate('foo'), 'foo')
+        self.assertEquals(schema.validate('12'), '12')
+        self.assertEquals(schema.validate(1.2231), 1)
 
-    def test_dont_care_values_in_dict_schema(self):
+    def test_and(self):
+        schema = Schema(And(str, Convert(lambda x: int(x))))
+        self.assertEquals(schema.validate('12'), 12)
+        self.assertRaises(NotValid, schema.validate, 12.1)
+        self.assertRaises(NotValid, schema.validate, 'foo')
+        self.assertRaises(NotValid, schema.validate, '12.1')
+
+    def test_dont_care_values_in_dict(self):
         schema = Schema(
             {'foo': int,
              'bar': str,
@@ -186,34 +129,17 @@ class TestLazyval(TestCase):
              'qux': 'baz',
              'fnord': [1, 2, 'donkey kong']})
 
-    def test_matching_key_invalid_value(self):
-        self.assertFalse(
-            validates(
-                {'foo': int,
-                 'bar': str,
-                 str: str},
-                {'foo': 12,
-                 'bar': 'bar',
-                 'qux': 'baz',
-                 'fnord': [1, 2, 'donkey kong']}))
+    def test_callable(self):
+        schema = Schema(lambda x: x < 2)
+        self.assertEquals(schema.validate(1), 1)
 
-    def test_schema_valid(self):
-        self.assertEquals(
-            validate(LAZY_SCHEMA, TYPICAL_TEST_DATA), TYPICAL_TEST_DATA)
+    def test_convert(self):
+        schema = Schema(Convert(lambda x: x + 2))
+        self.assertEquals(schema.validate(1), 3)
 
-    def test_schema_invalid(self):
-        self.assertRaises(NotValid, validate, LAZY_SCHEMA, INVALID_TEST_DATA)
-
-    def test_functional_validation_profile(self):
-        tmp_file, filename = mkstemp()
-        profile = Profile(filename)
-        result = profile.runcall(validate, LAZY_SCHEMA, TYPICAL_TEST_DATA)
-        st = stats.load(filename)
-        st.strip_dirs()
-        st.sort_stats('time', 'calls')
-        st.print_stats(20)
-        self.assertTrue(result)
-        self.fail()
+    def test_callable_exception(self):
+        schema = Schema(lambda x: x + 2)
+        self.assertRaises(NotValid, schema.validate, "foo")
 
     def test_schema_parsing_profile(self):
         tmp_file, filename = mkstemp()
@@ -226,3 +152,104 @@ class TestLazyval(TestCase):
         st.print_stats(20)
         self.assertTrue(result)
         self.fail()
+
+# Translated Schema tests
+
+    def test_and_schema(self):
+        self.assertEquals(Schema(And(int, lambda n: 0 < n < 5)).validate(3), 3)
+        self.assertRaises(
+            NotValid, Schema(And(int, lambda n: 0 < n < 5)).validate, 3.33)
+        self.assertEquals(
+            Schema(And(Convert(int), lambda n: 0 < n < 5)).validate(3.33), 3)
+        self.assertRaises(
+            NotValid,
+            Schema(And(Convert(int), lambda n: 0 < n < 5)).validate, '3.33')
+
+    def test_or_schema(self):
+        self.assertEquals(Schema(Or(int, dict)).validate(5), 5)
+        self.assertEquals(Schema(Or(int, dict)).validate({}), {})
+        self.assertRaises(NotValid, Schema(Or(int, dict)).validate, 'hai')
+        self.assertEquals(Schema(Or(int)).validate(4), 4)
+        self.assertRaises(NotValid, Schema(Or()).validate, 2)
+
+    def test_validate_list(self):
+        self.assertEquals(Schema([1, 0]).validate([1, 0, 1, 1]), [1, 0, 1, 1])
+        self.assertEquals(Schema([1, 0]).validate([]), [])
+        self.assertRaises(NotValid, Schema([1, 0]).validate, 0)
+        self.assertRaises(NotValid, Schema([1, 0]).validate, [2])
+        self.assertEquals(Schema(
+            And([1, 0], lambda l: len(l) > 2)).validate([0, 1, 0]), [0, 1, 0])
+        self.assertRaises(
+            NotValid,
+            Schema(And([1, 0], lambda l: len(l) > 2)).validate, [0, 1])
+
+    def test_list_tuple_set_frozenset(self):
+        self.assertEquals(Schema([int]).validate([1, 2]), [1, 2])
+        self.assertRaises(NotValid, Schema([int]).validate, ['1', 2])
+        self.assertEquals(
+            Schema(set([int])).validate(set([1, 2])), set([1, 2]))
+        self.assertRaises(NotValid, Schema(set([int])).validate, [1, 2])
+        self.assertRaises(NotValid, Schema(set([int])).validate, ['1', 2])
+        self.assertEquals(
+            Schema(tuple([int])).validate(tuple([1, 2])), tuple([1, 2]))
+        self.assertRaises(NotValid, Schema(tuple([int])).validate, [1, 2])
+
+    def test_strictly(self):
+        self.assertEquals(Schema(int).validate(1), 1)
+        self.assertRaises(NotValid, Schema(int).validate, '1')
+
+    def test_dict(self):
+        self.assertEquals(Schema({'key': 5}).validate({'key': 5}), {'key': 5})
+        self.assertRaises(NotValid, Schema({'key': 5}).validate, {'key': 'x'})
+        self.assertEquals(
+            Schema({'key': int}).validate({'key': 5}), {'key': 5})
+        self.assertEquals(
+            Schema({'n': int, 'f': float}).validate({'n': 5, 'f': 3.14}),
+            {'n': 5, 'f': 3.14})
+        self.assertRaises(
+            NotValid,
+            Schema({'n': int, 'f': float}).validate, {'n': 3.14, 'f': 5})
+        self.assertRaises(NotValid, Schema({'key': 5}).validate, {})
+        self.assertRaises(NotValid, Schema({'key': 5}).validate, {'n': 5})
+        self.assertRaises(NotValid, Schema({}).validate, {'n': 5})
+
+    def test_dict_keys(self):
+        self.assertEquals(
+            Schema({str: int}).validate({'a': 1, 'b': 2}), {'a': 1, 'b': 2})
+        self.assertRaises(
+            NotValid, Schema({str: int}).validate, {1: 1, 'b': 2})
+        # XXX: I don't intend to support this. Keys are literal,
+        # Optional(literal) or type.
+        # self.assertEquals(
+        #    Schema({Convert(str): Convert(int)}).validate({1: 3.14, 3.14: 1}),
+        #    {'1': 3, '3.14': 1})
+
+    def test_dict_optional_keys(self):
+        self.assertRaises(
+            NotValid, Schema({'a': 1, 'b': 2}).validate, {'a': 1})
+        self.assertEquals(
+            Schema({'a': 1, Optional('b'): 2}).validate({'a': 1}), {'a': 1})
+        self.assertEquals(
+            Schema({'a': 1, Optional('b'): 2}).validate({'a': 1, 'b': 2}),
+            {'a': 1, 'b': 2})
+
+    def test_validate_object(self):
+        schema = Schema({object: str})
+        self.assertEquals(schema.validate({42: 'str'}), {42: 'str'})
+        self.assertRaises(NotValid, schema.validate, {42: 777})
+
+    def test_issue_9_prioritized_key_comparison(self):
+        schema = Schema({'key': 42, object: 42})
+        self.assertEquals(
+            schema.validate({'key': 42, 777: 42}), {'key': 42, 777: 42})
+
+    def test_issue_9_prioritized_key_comparison_in_dicts(self):
+        # http://stackoverflow.com/questions/14588098/docopt-schema-validation
+        schema = Schema(
+            {'ID': Convert(int),  # , error='ID should be an int'),
+             'FILE': Or(None, Convert(open)),  # , error='FILE not opened')),
+             str: object})  # all type keys are optional
+        data = {'ID': 10, 'FILE': None, 'other': 'other', 'other2': 'other2'}
+        self.assertEquals(schema.validate(data), data)
+        data = {'ID': 10, 'FILE': None}
+        self.assertEquals(schema.validate(data), data)
