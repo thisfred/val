@@ -1,3 +1,8 @@
+"""
+Copyright (c) 2013
+Eric Casteleijn, <thisfred@gmail.com>
+"""
+
 __version__ = '0.1'
 
 

@@ -1,3 +1,9 @@
+"""
+Copyright (c) 2012-2013
+Eric Casteleijn, <thisfred@gmail.com>
+Vladimir Keleshev, <vladimir@keleshev.com>
+"""
+
 from tempfile import mkstemp
 from val import NotValid, Optional, Or, And, Schema, Convert
 from unittest import TestCase
