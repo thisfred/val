@@ -14,6 +14,8 @@ many of which I outright stole.
 
 The goal is to make validation faster than either, while keeping the very pythonic and minimal style of schema, at the expense of more advanced features.
 
+One of the shortcuts I took is bailing out on the first encountered validation error. The rationale (or rationalization, if you must) is that the library is meant to validate API inputs, rather than direct user input, so the burden is somewhat shifted to the client side to send valid requests. I do not suggest using val for validating web form input.
+
 Current status is: use at your peril, everything subject to change.
 
 I have not optimized much, but for the kind of schemas I need (specifically: to validate JSON that has been loaded into python structures,) I have extremely anecdotal evidence that it's around 10x faster than both schema and flatland. (Again, that is mostly because it does way less, and I intend to keep it that way.)
