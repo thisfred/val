@@ -68,6 +68,9 @@ def _schema_list_item_validate(sub_schemas, value):
 
 
 def parse_schema(schema):
+    if isinstance(schema, Schema):
+        return schema.validate
+
     if type(schema) is type:
 
         def type_validator(data):

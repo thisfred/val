@@ -65,3 +65,14 @@ Elements that can occur in a schema are:
     * `And(Convert(int), lambda x: x < 12, lambda x: x >= 3)` will validate `'3'` and return `3` or `11.6` and return `11`, but not `'12'`, `42.77`, or `'foo'` 
   * `{Optional(simple_literal_key): value}` will match any key value pair that matches `simple_literal_key: value` but the schema will still validate dictionary values with no matching key.
     * `{Optional('foo'): 12}` matches `{'foo': 12}` and `{}` but not `{'foo': 13}` or `{'foo': 'bar'}`
+  * Other parsed schema objects. So this works:
+
+      sub_schema = Schema({'foo': str, str: int})
+      schema = Schema(
+          {'key1': sub_schema,
+           'key2': sub_schema,
+           str: sub_schema})
+      schema2.validate(
+          {'key1': {'foo': 'bar'},
+           'key2': {'foo': 'qux', 'baz': 43},
+           'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))

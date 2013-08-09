@@ -9,7 +9,7 @@ from val import NotValid, Optional, Or, And, Schema, Convert
 from unittest import TestCase
 from hotshot import Profile, stats
 
-LAZY_SCHEMA = {
+SCHEMA = {
     Optional('invisible'): bool,
     Optional('immutable'): bool,
     Optional('favorite_colors'): [str],
@@ -150,8 +150,8 @@ class TestLazyval(TestCase):
     def test_schema_parsing_profile(self):
         tmp_file, filename = mkstemp()
         profile = Profile(filename)
-        lazy_schema = Schema(LAZY_SCHEMA)
-        result = profile.runcall(lazy_schema.validate, TYPICAL_TEST_DATA)
+        schema = Schema(SCHEMA)
+        result = profile.runcall(schema.validate, TYPICAL_TEST_DATA)
         st = stats.load(filename)
         st.strip_dirs()
         st.sort_stats('time', 'calls')
@@ -159,8 +159,38 @@ class TestLazyval(TestCase):
         self.assertTrue(result)
         self.fail()
 
-# Translated Schema tests
+    def test_subschemas(self):
+        schema1 = Schema({'foo': str, str: int})
+        schema2 = Schema(
+            {'key1': schema1,
+             'key2': schema1,
+             str: schema1})
+        self.assertTrue(schema2.validates(
+            {'key1': {'foo': 'bar'},
+             'key2': {'foo': 'qux', 'baz': 43},
+             'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))
+        self.assertFalse(schema2.validates(
+            {'key1': {'doo': 'bar'},
+             'key2': {'foo': 'qux', 'baz': 43},
+             'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))
+        self.assertFalse(schema2.validates(
+            {'key1': {'doo': 'bar'},
+             'key2': {'foo': 'qux', 12: 43},
+             'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))
+        self.assertFalse(schema2.validates(
+            {'key1': {'foo': 'bar'},
+             'key2': {'foo': 'qux', 'baz': 'derp'},
+             'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))
+        self.assertFalse(schema2.validates(
+            {'key1': {'foo': 'bar'},
+             'key2': {'foo': 'qux', 'baz': 'derp'},
+             12: {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))
+        self.assertFalse(schema2.validates(
+            {'key1': {'foo': 'bar'},
+             'key2': {'foo': 'qux', 'baz': 'derp'},
+             'whatever': {}}))
 
+# Translated Schema tests
     def test_and_schema(self):
         self.assertEquals(Schema(And(int, lambda n: 0 < n < 5)).validate(3), 3)
         self.assertRaises(
