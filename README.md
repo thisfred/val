@@ -72,7 +72,7 @@ Elements that can occur in a schema are:
             {'key1': sub_schema,
              'key2': sub_schema,
              str: sub_schema})
-        schema2.validate(
+        schema.validate(
             {'key1': {'foo': 'bar'},
              'key2': {'foo': 'qux', 'baz': 43},
              'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))
