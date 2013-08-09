@@ -67,12 +67,12 @@ Elements that can occur in a schema are:
     * `{Optional('foo'): 12}` matches `{'foo': 12}` and `{}` but not `{'foo': 13}` or `{'foo': 'bar'}`
   * Other parsed schema objects. So this works:
 
-      sub_schema = Schema({'foo': str, str: int})
-      schema = Schema(
-          {'key1': sub_schema,
-           'key2': sub_schema,
-           str: sub_schema})
-      schema2.validate(
-          {'key1': {'foo': 'bar'},
-           'key2': {'foo': 'qux', 'baz': 43},
-           'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))
+        sub_schema = Schema({'foo': str, str: int})
+        schema = Schema(
+            {'key1': sub_schema,
+             'key2': sub_schema,
+             str: sub_schema})
+        schema2.validate(
+            {'key1': {'foo': 'bar'},
+             'key2': {'foo': 'qux', 'baz': 43},
+             'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}}))
