@@ -25,16 +25,16 @@ The schemas understood by lazyval are very similar to the ones in schema:
     schema = Schema({
         'invisible': bool,
         'immutable': bool,
-        Optional('favorite_colors'): [str],
-        Optional('favorite_foods'): [str],
+        Optional('favorite_colors'): [basestring],
+        Optional('favorite_foods'): [basestring],
         'lucky_number': Or(int, None),
         'shoe_size': int,
         'mother': {
-            'name': str,
-            'nested': {'id': str}},
+            'name': basestring,
+            'nested': {'id': basestring}},
         Optional('father'): {
-            'name': str,
-            'nested': {'id': str}}})
+            'name': basestring,
+            'nested': {'id': basestring}}})
     
     result = schema.validate(some_value)
     # result will be the validated value, or a NotValid exception will be raised.
