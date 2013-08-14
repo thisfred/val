@@ -8,8 +8,6 @@ from tempfile import mkstemp
 from val import NotValid, Optional, Or, And, Schema, Convert
 from unittest import TestCase
 from hotshot import Profile, stats
-from schema import Schema as SchemaSchema, Optional as SchemaOptional
-from flatland import Dict, Boolean, List, String, Integer
 
 
 VAL_SCHEMA = {
@@ -25,36 +23,6 @@ VAL_SCHEMA = {
     Optional('father'): {
         Optional('name'): str,
         'nested': {'id': str}}}
-
-SCHEMA_SCHEMA = {
-    SchemaOptional('invisible'): bool,
-    SchemaOptional('immutable'): bool,
-    SchemaOptional('favorite_colors'): [str],
-    SchemaOptional('favorite_foods'): [str],
-    SchemaOptional('lucky_number'): int,
-    SchemaOptional('shoe_size'): int,
-    SchemaOptional('mother'): {
-        SchemaOptional('name'): str,
-        'nested': {'id': str}},
-    SchemaOptional('father'): {
-        SchemaOptional('name'): str,
-        'nested': {'id': str}}}
-
-
-FlatlandSchema = Dict.of(
-    Boolean.named('invisible').using(optional=True),
-    Boolean.named('preserve').using(optional=True),
-    List.named('favorite_colors').of(String).using(optional=True),
-    List.named('favorite_foods').of(String).using(optional=True),
-    Integer.named('lucky_number').using(optional=True),
-    Integer.named('shoe_size').using(optional=True),
-    Dict.named('mother').of(
-        String.named('name').using(optional=True),
-        Dict.named('nested').of(String.named('id'))),
-    Dict.named('father').of(
-        String.named('name').using(optional=True),
-        Dict.named('nested').of(String.named('id')))).using(policy='duck')
-
 
 VALID_TEST_DATA = {
     'invisible': False,
@@ -82,7 +50,7 @@ INVALID_TEST_DATA = {
         'nested': {'id': '9492921'}}}
 
 
-class TestLazyval(TestCase):
+class TestVal(TestCase):
 
     def test_identity(self):
         schema = Schema('test')
@@ -125,6 +93,11 @@ class TestLazyval(TestCase):
     def test_dictionary_missing_key(self):
         schema = Schema({'key': str, 'key2': str})
         self.assertRaises(NotValid, schema.validate, {'key': 'val'})
+
+    def test_dictionary_leftover_key(self):
+        schema = Schema({'key': str})
+        self.assertRaises(
+            NotValid, schema.validate, {'key': 'val', 'key2': 'val2'})
 
     def test_list_data(self):
         schema = Schema([str])
@@ -195,6 +168,42 @@ class TestLazyval(TestCase):
         self.assertRaises(NotValid, schema.validate, "foo")
 
     def test_schema_parsing_profile(self):
+        try:
+            from schema import (
+                Schema as SchemaSchema, Optional as SchemaOptional)
+            from flatland import Dict, Boolean, List, String, Integer
+        except ImportError:
+            return
+
+        SCHEMA_SCHEMA = {
+            SchemaOptional('invisible'): bool,
+            SchemaOptional('immutable'): bool,
+            SchemaOptional('favorite_colors'): [str],
+            SchemaOptional('favorite_foods'): [str],
+            SchemaOptional('lucky_number'): int,
+            SchemaOptional('shoe_size'): int,
+            SchemaOptional('mother'): {
+                SchemaOptional('name'): str,
+                'nested': {'id': str}},
+            SchemaOptional('father'): {
+                SchemaOptional('name'): str,
+                'nested': {'id': str}}}
+
+        FlatlandSchema = Dict.of(
+            Boolean.named('invisible').using(optional=True),
+            Boolean.named('preserve').using(optional=True),
+            List.named('favorite_colors').of(String).using(optional=True),
+            List.named('favorite_foods').of(String).using(optional=True),
+            Integer.named('lucky_number').using(optional=True),
+            Integer.named('shoe_size').using(optional=True),
+            Dict.named('mother').of(
+                String.named('name').using(optional=True),
+                Dict.named('nested').of(String.named('id'))),
+            Dict.named('father').of(
+                String.named('name').using(optional=True),
+                Dict.named('nested').of(String.named('id')))).using(
+                    policy='duck')
+
         tmp_file, filename = mkstemp()
         profile = Profile(filename)
         print

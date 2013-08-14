@@ -46,18 +46,6 @@ class Convert(object):
         return '<Convert: %r>' % (self.convert,)
 
 
-def _schema_list_item_validate(sub_schemas, value):
-    for sub in sub_schemas:
-        try:
-            return sub(value)
-
-        except NotValid:
-            pass
-
-    raise NotValid('%r not validated by anything in %s.' % (
-        value, sub_schemas))
-
-
 def parse_schema(schema):
     if isinstance(schema, Schema):
         return schema.validate
@@ -98,11 +86,10 @@ def parse_schema(schema):
                     raise NotValid('missing key: %r' % (key,))
                 validated[key] = sub_schema(data[key])
                 to_validate.remove(key)
-            for key in to_validate[:]:
+            for key in to_validate:
                 value = data[key]
                 if key in optional:
                     validated[key] = optional[key](value)
-                    to_validate.remove(key)
                     continue
                 for key_schema, value_schema in types.items():
                     if not isinstance(key, key_schema):
@@ -112,13 +99,10 @@ def parse_schema(schema):
                     except NotValid:
                         continue
                     else:
-                        to_validate.remove(key)
                         break
                 else:
                     raise NotValid('key %r not matched' % (key,))
 
-            if to_validate:
-                raise NotValid('keys %r not matched' % (to_validate,))
             return validated
 
         return dict_validator
@@ -127,15 +111,24 @@ def parse_schema(schema):
 
         sub_schemas = [parse_schema(s) for s in schema]
 
-        def list_validator(data):
+        def item_validator(value):
+            for sub in sub_schemas:
+                try:
+                    return sub(value)
+
+                except NotValid:
+                    pass
+
+            raise NotValid('%r not validated by anything in %s.' % (
+                value, schema))
+
+        def collection_validator(data):
             if not type(data) is type(schema):
                 raise NotValid('%r is not of type %s', (data, type(schema)))
 
-            return type(schema)([
-                _schema_list_item_validate(sub_schemas, value)
-                for value in data])
+            return type(schema)(item_validator(value) for value in data)
 
-        return list_validator
+        return collection_validator
 
     if callable(schema):
 
