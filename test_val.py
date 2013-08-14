@@ -8,23 +8,55 @@ from tempfile import mkstemp
 from val import NotValid, Optional, Or, And, Schema, Convert
 from unittest import TestCase
 from hotshot import Profile, stats
+from schema import Schema as SchemaSchema, Optional as SchemaOptional
+from flatland import Dict, Boolean, List, String, Integer
 
-SCHEMA = {
+
+VAL_SCHEMA = {
     Optional('invisible'): bool,
     Optional('immutable'): bool,
     Optional('favorite_colors'): [str],
     Optional('favorite_foods'): [str],
-    Optional('lucky_number'): Or(int, None),
+    Optional('lucky_number'): int,
     Optional('shoe_size'): int,
     Optional('mother'): {
-        'name': str,
+        Optional('name'): str,
         'nested': {'id': str}},
     Optional('father'): {
-        'name': str,
+        Optional('name'): str,
+        'nested': {'id': str}}}
+
+SCHEMA_SCHEMA = {
+    SchemaOptional('invisible'): bool,
+    SchemaOptional('immutable'): bool,
+    SchemaOptional('favorite_colors'): [str],
+    SchemaOptional('favorite_foods'): [str],
+    SchemaOptional('lucky_number'): int,
+    SchemaOptional('shoe_size'): int,
+    SchemaOptional('mother'): {
+        SchemaOptional('name'): str,
+        'nested': {'id': str}},
+    SchemaOptional('father'): {
+        SchemaOptional('name'): str,
         'nested': {'id': str}}}
 
 
-TYPICAL_TEST_DATA = {
+FlatlandSchema = Dict.of(
+    Boolean.named('invisible').using(optional=True),
+    Boolean.named('preserve').using(optional=True),
+    List.named('favorite_colors').of(String).using(optional=True),
+    List.named('favorite_foods').of(String).using(optional=True),
+    Integer.named('lucky_number').using(optional=True),
+    Integer.named('shoe_size').using(optional=True),
+    Dict.named('mother').of(
+        String.named('name').using(optional=True),
+        Dict.named('nested').of(String.named('id'))),
+    Dict.named('father').of(
+        String.named('name').using(optional=True),
+        Dict.named('nested').of(String.named('id')))).using(policy='duck')
+
+
+VALID_TEST_DATA = {
     'invisible': False,
     'immutable': False,
     'favorite_colors': ['mauve', 'taupe', 'beige'],
@@ -35,7 +67,6 @@ TYPICAL_TEST_DATA = {
         'name': 'edna',
         'nested': {'id': '1232134'}},
     'father': {
-        'name': 'ed',
         'nested': {'id': '9492921'}}}
 
 INVALID_TEST_DATA = {
@@ -73,9 +104,19 @@ class TestLazyval(TestCase):
         schema = Schema({'key': str})
         self.assertEquals(schema.validate({'key': 'val'}), {'key': 'val'})
 
+    def test_dictionary_not_a_dict(self):
+        schema = Schema({'key': str})
+        self.assertRaises(NotValid, schema.validate, 'foo')
+
     def test_dictionary_optional(self):
         schema = Schema({'key': str, Optional('key2'): str})
         self.assertEquals(schema.validate({'key': 'val'}), {'key': 'val'})
+
+    def test_dictionary_optional_repr(self):
+        schema = Schema({'key': str, Optional('key2'): str})
+        self.assertEquals(
+            str(schema),
+            "{<Optional: 'key2'>: <type 'str'>, 'key': <type 'str'>}")
 
     def test_dictionary_wrong_key(self):
         schema = Schema({'key': str})
@@ -119,6 +160,12 @@ class TestLazyval(TestCase):
         self.assertRaises(NotValid, schema.validate, 'foo')
         self.assertRaises(NotValid, schema.validate, '12.1')
 
+    def test_and_repr(self):
+        schema = Schema(And(str, Convert(lambda x: int(x))))
+        self.assertTrue(
+            str(schema).startswith(
+                "<<type 'str'> and <Convert: <function <lambda> at "))
+
     def test_dont_care_values_in_dict(self):
         schema = Schema(
             {'foo': int,
@@ -150,14 +197,46 @@ class TestLazyval(TestCase):
     def test_schema_parsing_profile(self):
         tmp_file, filename = mkstemp()
         profile = Profile(filename)
-        schema = Schema(SCHEMA)
-        result = profile.runcall(schema.validate, TYPICAL_TEST_DATA)
+        print
+        print "flatland"
+        schema = FlatlandSchema()
+        profile.start()
+        schema.set(VALID_TEST_DATA)
+        schema.validate()
+        result = schema.value
+        profile.stop()
         st = stats.load(filename)
         st.strip_dirs()
         st.sort_stats('time', 'calls')
         st.print_stats(20)
         self.assertTrue(result)
-        self.fail()
+        profile.close()
+        print "schema"
+        tmp_file, filename = mkstemp()
+        profile = Profile(filename)
+        schema = SchemaSchema(SCHEMA_SCHEMA)
+        profile.start()
+        result = schema.validate(VALID_TEST_DATA)
+        profile.stop()
+        st = stats.load(filename)
+        st.strip_dirs()
+        st.sort_stats('time', 'calls')
+        st.print_stats(20)
+        self.assertTrue(result)
+        profile.close()
+        print "val"
+        tmp_file, filename = mkstemp()
+        profile = Profile(filename)
+        schema = Schema(VAL_SCHEMA)
+        profile.start()
+        result = schema.validate(VALID_TEST_DATA)
+        profile.stop()
+        st = stats.load(filename)
+        st.strip_dirs()
+        st.sort_stats('time', 'calls')
+        st.print_stats(20)
+        profile.close()
+        self.assertTrue(result)
 
     def test_subschemas(self):
         schema1 = Schema({'foo': str, str: int})

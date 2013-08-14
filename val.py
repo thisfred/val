@@ -15,8 +15,8 @@ class Optional(object):
     def __init__(self, value):
         self.value = value
 
-    def __str__(self):
-        return "<Optional: %s>" % (self.value,)
+    def __repr__(self):
+        return "<Optional: %r>" % (self.value,)
 
 
 class Or(object):
@@ -24,8 +24,8 @@ class Or(object):
     def __init__(self, *values):
         self.values = values
 
-    def __str__(self):
-        return "<%s>" % (" or ".join(["%s" % (v,) for v in self.values]),)
+    def __repr__(self):
+        return "<%s>" % (" or ".join(["%r" % (v,) for v in self.values]),)
 
 
 class And(object):
@@ -33,17 +33,8 @@ class And(object):
     def __init__(self, *values):
         self.values = values
 
-    def __str__(self):
-        return "<%s>" % (" and ".join(["%s" % (v,) for v in self.values]),)
-
-
-class Check(object):
-
-    def __init__(self, condition):
-        self.condition = condition
-
-    def __str__(self):
-        return '<Check: %r>' % (self.condition,)
+    def __repr__(self):
+        return "<%s>" % (" and ".join(["%r" % (v,) for v in self.values]),)
 
 
 class Convert(object):
@@ -51,7 +42,7 @@ class Convert(object):
     def __init__(self, conversion):
         self.convert = conversion
 
-    def __str__(self):
+    def __repr__(self):
         return '<Convert: %r>' % (self.convert,)
 
 
@@ -77,7 +68,7 @@ def parse_schema(schema):
             if isinstance(data, schema):
                 return data
 
-            raise NotValid('%r is not of type %s' % (data, schema))
+            raise NotValid('%r is not of type %r' % (data, schema))
 
         return type_validator
 
@@ -104,7 +95,7 @@ def parse_schema(schema):
             to_validate = data.keys()
             for key, sub_schema in mandatory.items():
                 if key not in data:
-                    raise NotValid('missing key: %s' % (key,))
+                    raise NotValid('missing key: %r' % (key,))
                 validated[key] = sub_schema(data[key])
                 to_validate.remove(key)
             for key in to_validate[:]:
@@ -127,7 +118,7 @@ def parse_schema(schema):
                     raise NotValid('key %r not matched' % (key,))
 
             if to_validate:
-                raise NotValid('keys %s not matched' % (to_validate,))
+                raise NotValid('keys %r not matched' % (to_validate,))
             return validated
 
         return dict_validator
@@ -153,7 +144,7 @@ def parse_schema(schema):
                 if schema(data):
                     return data
                 else:
-                    raise NotValid('%r does not satisfy %s' % (data, schema))
+                    raise NotValid('%r does not satisfy %r' % (data, schema))
             except (TypeError, ValueError), e:
                 raise NotValid(e)
 
@@ -178,7 +169,7 @@ def parse_schema(schema):
                     return sub(data)
                 except NotValid:
                     pass
-            raise NotValid('%r not validated by %s' % (data, schema))
+            raise NotValid('%r not validated by %r' % (data, schema))
 
         return or_validator
 
@@ -196,7 +187,7 @@ def parse_schema(schema):
         if data == schema:
             return data
 
-        raise NotValid('%r is not equal to %s' % (data, schema))
+        raise NotValid('%r is not equal to %r' % (data, schema))
 
     return static_validator
 
@@ -204,7 +195,11 @@ def parse_schema(schema):
 class Schema(object):
 
     def __init__(self, schema):
+        self._orig_schema = schema
         self.schema = parse_schema(schema)
+
+    def __repr__(self):
+        return repr(self._orig_schema)
 
     def validate(self, data):
         return self.schema(data)
