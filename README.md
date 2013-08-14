@@ -21,7 +21,8 @@ Current status is: moving towards 0.1 release, somewhat stable, somewhat complet
 I have not optimized much, but for the kind of schemas I need (specifically: to validate JSON that has been loaded into python structures,) I have extremely anecdotal evidence that it's around 10x faster than both schema and flatland. (Again, that is mostly because it does way less, and I intend to keep it that way.)
 
 The schemas understood by lazyval are very similar to the ones in schema:
-
+    from val import Schema, Or
+    
     schema = Schema({
         'invisible': bool,
         'immutable': bool,
@@ -48,7 +49,7 @@ Elements that can occur in a schema are:
     * `'foo'` will validate `'foo'`
   * types that will validate anything that is an instance of the type: 
     * `int`, will validate `12`
-    * `str`, will validate `'foo'`
+    * `basestring`, will validate `'foo'` and `u'fnørd'`
     * `list`, will validate `[12, 'foo']`
     * `dict`, will validate `{'foo': 12}`
     * `object`, will validate any object, so all of the above and more
