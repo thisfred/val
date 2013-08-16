@@ -7,43 +7,9 @@ __version__ = '0.1.1'
 
 
 class NotValid(Exception):
-    pass
 
-
-class Optional(object):
-
-    def __init__(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return "<Optional: %r>" % (self.value,)
-
-
-class Or(object):
-
-    def __init__(self, *values):
-        self.values = values
-
-    def __repr__(self):
-        return "<%s>" % (" or ".join(["%r" % (v,) for v in self.values]),)
-
-
-class And(object):
-
-    def __init__(self, *values):
-        self.values = values
-
-    def __repr__(self):
-        return "<%s>" % (" and ".join(["%r" % (v,) for v in self.values]),)
-
-
-class Convert(object):
-
-    def __init__(self, conversion):
-        self.convert = conversion
-
-    def __repr__(self):
-        return '<Convert: %r>' % (self.convert,)
+    def __init__(self, msg):
+        self.msg = msg
 
 
 def parse_schema(schema):
@@ -78,19 +44,25 @@ def parse_schema(schema):
 
         def dict_validator(data):
             if not isinstance(data, dict):
-                raise NotValid('%r is not of type dict', (data,))
+                raise NotValid('%r is not of type dict' % (data,))
             validated = {}
             to_validate = data.keys()
             for key, sub_schema in mandatory.items():
                 if key not in data:
                     raise NotValid('missing key: %r' % (key,))
-                validated[key] = sub_schema(data[key])
+                try:
+                    validated[key] = sub_schema(data[key])
+                except NotValid, e:
+                    raise NotValid('%s: %s' % (key, e.msg))
                 to_validate.remove(key)
             for key in to_validate:
                 value = data[key]
                 if key in optional:
-                    validated[key] = optional[key](value)
-                    continue
+                    try:
+                        validated[key] = optional[key](value)
+                    except NotValid, e:
+                        raise NotValid('%s: %s' % (key, e.msg))
+                    continue  # pragma: nocover
                 for key_schema, value_schema in types.items():
                     if not isinstance(key, key_schema):
                         continue
@@ -101,7 +73,8 @@ def parse_schema(schema):
                     else:
                         break
                 else:
-                    raise NotValid('key %r not matched' % (key,))
+                    raise NotValid('key %r and value %s not matched' % (
+                        key, value))
 
             return validated
 
@@ -124,7 +97,7 @@ def parse_schema(schema):
 
         def collection_validator(data):
             if not type(data) is type(schema):
-                raise NotValid('%r is not of type %s', (data, type(schema)))
+                raise NotValid('%r is not of type %s' % (data, type(schema)))
 
             return type(schema)(item_validator(value) for value in data)
 
@@ -142,39 +115,6 @@ def parse_schema(schema):
                 raise NotValid(e)
 
         return callable_validator
-
-    if isinstance(schema, And):
-        sub_schemas = [parse_schema(v) for v in schema.values]
-
-        def and_validator(data):
-            for sub in sub_schemas:
-                data = sub(data)
-            return data
-
-        return and_validator
-
-    if isinstance(schema, Or):
-        sub_schemas = [parse_schema(v) for v in schema.values]
-
-        def or_validator(data):
-            for sub in sub_schemas:
-                try:
-                    return sub(data)
-                except NotValid:
-                    pass
-            raise NotValid('%r not validated by %r' % (data, schema))
-
-        return or_validator
-
-    if isinstance(schema, Convert):
-
-        def conversion_validator(data):
-            try:
-                return schema.convert(data)
-            except (TypeError, ValueError), e:
-                raise NotValid(e)
-
-        return conversion_validator
 
     def static_validator(data):
         if data == schema:
@@ -199,7 +139,82 @@ class Schema(object):
 
     def validates(self, data):
         try:
-            self.schema(data)
+            self.validate(data)
             return True
         except NotValid:
             return False
+
+
+class Optional(object):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return "<Optional: %r>" % (self.value,)
+
+
+class Or(Schema):
+
+    def __init__(self, *values):
+        self.values = values
+        self.schemas = tuple(parse_schema(s) for s in values)
+
+    def validate(self, data):
+        for sub in self.schemas:
+            try:
+                return sub(data)
+            except NotValid:
+                pass
+        raise NotValid('%r not validated by %r' % (data, self.values))
+
+    def __repr__(self):
+        return "<%s>" % (" or ".join(["%r" % (v,) for v in self.values]),)
+
+
+class And(Schema):
+
+    def __init__(self, *values):
+        self.values = values
+        self.schemas = tuple(parse_schema(s) for s in values)
+
+    def validate(self, data):
+        for sub in self.schemas:
+            data = sub(data)
+        return data
+
+    def __repr__(self):
+        return "<%s>" % (" and ".join(["%r" % (v,) for v in self.values]),)
+
+
+class Convert(Schema):
+
+    def __init__(self, conversion):
+        self.convert = conversion
+
+    def validate(self, data):
+        try:
+            return self.convert(data)
+        except (TypeError, ValueError), e:
+            raise NotValid(e)
+
+    def __repr__(self):
+        return '<Convert: %r>' % (self.convert,)
+
+
+class Ordered(Schema):
+
+    def __init__(self, schemas):
+        self._orig_schema = schemas
+        self.schemas = type(schemas)(Schema(s) for s in schemas)
+        self.length = len(self.schemas)
+
+    def validate(self, values):
+        if self.length != len(values):
+            raise NotValid(
+                "Expected %d values, got %d" % (self.length, len(values)))
+        return type(self.schemas)(
+            self.schemas[i].validate(v) for i, v in enumerate(values))
+
+    def __repr__(self):
+        return '<Ordered: %r>' % (self.schemas,)

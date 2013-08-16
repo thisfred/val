@@ -5,7 +5,7 @@ Vladimir Keleshev, <vladimir@keleshev.com>
 """
 
 from tempfile import mkstemp
-from val import NotValid, Optional, Or, And, Schema, Convert
+from val import NotValid, Optional, Or, And, Schema, Convert, Ordered
 from unittest import TestCase
 from hotshot import Profile, stats
 
@@ -120,21 +120,27 @@ class TestVal(TestCase):
         self.assertFalse(schema.validates('12'))
 
     def test_or(self):
-        schema = Schema(Or(1, str, Convert(lambda x: int(x))))
+        schema = Or(1, str, Convert(lambda x: int(x)))
         self.assertEquals(schema.validate(1), 1)
         self.assertEquals(schema.validate('foo'), 'foo')
         self.assertEquals(schema.validate('12'), '12')
         self.assertEquals(schema.validate(1.2231), 1)
 
+    def test_or_repr(self):
+        schema = Or(1, str, Convert(lambda x: int(x)))
+        self.assertTrue(
+            str(schema).startswith(
+                "<1 or <type 'str'> or <Convert: <function <lambda> at "))
+
     def test_and(self):
-        schema = Schema(And(str, Convert(lambda x: int(x))))
+        schema = And(str, Convert(lambda x: int(x)))
         self.assertEquals(schema.validate('12'), 12)
         self.assertRaises(NotValid, schema.validate, 12.1)
         self.assertRaises(NotValid, schema.validate, 'foo')
         self.assertRaises(NotValid, schema.validate, '12.1')
 
     def test_and_repr(self):
-        schema = Schema(And(str, Convert(lambda x: int(x))))
+        schema = And(str, Convert(lambda x: int(x)))
         self.assertTrue(
             str(schema).startswith(
                 "<<type 'str'> and <Convert: <function <lambda> at "))
@@ -160,8 +166,20 @@ class TestVal(TestCase):
         self.assertEquals(schema.validate(1), 1)
 
     def test_convert(self):
-        schema = Schema(Convert(lambda x: x + 2))
+        schema = Convert(lambda x: x + 2)
         self.assertEquals(schema.validate(1), 3)
+
+    def test_ordered(self):
+        schema = Ordered([str, int])
+        self.assertTrue(schema.validates(['1', 3]))
+        self.assertFalse(schema.validates([1, '3']))
+        self.assertFalse(schema.validates(['1', 3, 4]))
+        self.assertFalse(schema.validates(['1']))
+
+    def test_ordered_repr(self):
+        schema = Ordered([str, int])
+        self.assertEquals(
+            str(schema), "<Ordered: [<type 'str'>, <type 'int'>]>")
 
     def test_callable_exception(self):
         schema = Schema(lambda x: x + 2)
@@ -350,12 +368,14 @@ class TestVal(TestCase):
 
     def test_dict_optional_keys(self):
         self.assertRaises(
-            NotValid, Schema({'a': 1, 'b': 2}).validate, {'a': 1})
+            NotValid, Schema({Optional('a'): 1, 'b': 2}).validate, {'a': 1})
         self.assertEquals(
             Schema({'a': 1, Optional('b'): 2}).validate({'a': 1}), {'a': 1})
         self.assertEquals(
             Schema({'a': 1, Optional('b'): 2}).validate({'a': 1, 'b': 2}),
             {'a': 1, 'b': 2})
+        self.assertRaises(
+            NotValid, Schema({Optional('a'): 1}).validate, {'a': 2})
 
     def test_validate_object(self):
         schema = Schema({object: str})
