@@ -104,7 +104,7 @@ Elements that can occur in a schema are:
     dictionary values with no matching key.
     * `{Optional('foo'): 12}` matches `{'foo': 12}` and `{}` but not
       `{'foo': 13}` or `{'foo': 'bar'}`
-  * `Ordered([element1, element2, element3]) will validate a list with
+  * `Ordered([element1, element2, element3])` will validate a list with
     *exactly* 3 elements, each of which must be validated by the corresponding
     element in the schema. If order and number of elements do not matter, just
     use a list.
