@@ -3,7 +3,7 @@ Copyright (c) 2013
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 class NotValid(Exception):
@@ -161,12 +161,14 @@ class Or(Schema):
         self.schemas = tuple(parse_schema(s) for s in values)
 
     def validate(self, data):
+        errors = []
         for sub in self.schemas:
             try:
                 return sub(data)
-            except NotValid:
-                pass
-        raise NotValid('%r not validated by %r' % (data, self.values))
+            except NotValid, e:
+                errors.append(e.msg)
+        raise NotValid('%r not validated:\n\n  - %s' % (
+            data, '\n  - '.join(errors)))
 
     def __repr__(self):
         return "<%s>" % (" or ".join(["%r" % (v,) for v in self.values]),)
@@ -212,7 +214,8 @@ class Ordered(Schema):
     def validate(self, values):
         if self.length != len(values):
             raise NotValid(
-                "Expected %d values, got %d" % (self.length, len(values)))
+                "Does not have exactly %d values. (Got %d.)" % (
+                    self.length, len(values)))
         return type(self.schemas)(
             self.schemas[i].validate(v) for i, v in enumerate(values))
 
