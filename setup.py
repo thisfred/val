@@ -15,4 +15,4 @@ setup(
     long_description=open('README.md').read(),
     tests_require=[
         'flatland', 'schema', 'nose', 'coverage', 'flake8', 'pylint'],
-    test_suite='test_val')
+    test_suite='tests')
