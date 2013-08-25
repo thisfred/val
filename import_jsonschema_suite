@@ -1,0 +1,1 @@
+jsonschema_suite flatten tests/draft4/ > tests/draft4.json

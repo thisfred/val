@@ -1,6 +1,22 @@
+import sys
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
 
 import val
+
+
+class PyTest(TestCommand):
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
+
 
 setup(
     name='val',
@@ -11,8 +27,8 @@ setup(
     license='BSD',
     keywords='validation validators',
     url='http://github.com/thisfred/val',
-    py_modules=['val'],
     long_description=open('README.md').read(),
-    tests_require=[
-        'flatland', 'schema', 'nose', 'coverage', 'flake8', 'pylint'],
+    packages=['val'],
+    cmdclass={'test': PyTest},
+    tests_require=['pytest', 'Pyth'],
     test_suite='tests')

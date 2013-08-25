@@ -18,6 +18,12 @@ def parse_schema(schema):
 
     if type(schema) is type:
 
+        # XXX: int will validate booleans, if this is not desired in your
+        # application, use And(int, lambda x: not isinstance(x, bool)) or
+        # somehting. I think it is unfortunate this is the case in Python, but
+        # I don't want to special case it and deviate from the Python type
+        # hierarchy.
+
         def type_validator(data):
             if isinstance(data, schema):
                 return data
@@ -33,12 +39,15 @@ def parse_schema(schema):
         types = {}
         for key, value in schema.items():
             if isinstance(key, Optional):
-                optional[key.value] = parse_schema(value)
+                optional[key.schema] = parse_schema(value)
                 continue
 
             if type(key) is type:
                 types[key] = parse_schema(value)
                 continue
+
+            if callable(key):
+                optional[key] = parse_schema(value)
 
             mandatory[key] = parse_schema(value)
 
@@ -57,12 +66,19 @@ def parse_schema(schema):
                 to_validate.remove(key)
             for key in to_validate:
                 value = data[key]
-                if key in optional:
+                found = False
+                for key_schema in optional:
                     try:
-                        validated[key] = optional[key](value)
+                        validated_key = key_schema(key)
+                    except NotValid:
+                        continue
+                    try:
+                        validated[validated_key] = optional[key_schema](value)
                     except NotValid, e:
                         raise NotValid('%s: %s' % (key, e.msg))
-                    continue  # pragma: nocover
+                    found = True
+                if found:
+                    continue
                 for key_schema, value_schema in types.items():
                     if not isinstance(key, key_schema):
                         continue
@@ -149,9 +165,24 @@ class Optional(object):
 
     def __init__(self, value):
         self.value = value
+        self.schema = parse_schema(value)
 
     def __repr__(self):
         return "<Optional: %r>" % (self.value,)
+
+
+class Not(Schema):
+
+    def __init__(self, value):
+        self.value = value
+        self.schema = parse_schema(value)
+
+    def validate(self, data):
+        try:
+            self.schema(data)
+        except NotValid:
+            return data
+        raise NotValid('%r was validated by %r' % (data, self.value))
 
 
 class Or(Schema):
