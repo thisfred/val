@@ -3,13 +3,16 @@ Copyright (c) 2013
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 
 class NotValid(Exception):
 
     def __init__(self, msg):
         self.msg = msg
+
+    def __str__(self):
+        return self.msg
 
 
 def parse_schema(schema):
@@ -20,7 +23,7 @@ def parse_schema(schema):
 
         # XXX: int will validate booleans, if this is not desired in your
         # application, use And(int, lambda x: not isinstance(x, bool)) or
-        # somehting. I think it is unfortunate this is the case in Python, but
+        # something. I think it is unfortunate this is the case in Python, but
         # I don't want to special case it and deviate from the Python type
         # hierarchy.
 
@@ -48,6 +51,7 @@ def parse_schema(schema):
 
             if callable(key):
                 optional[key] = parse_schema(value)
+                continue
 
             mandatory[key] = parse_schema(value)
 
@@ -56,6 +60,10 @@ def parse_schema(schema):
                 raise NotValid('%r is not of type dict' % (data,))
             validated = {}
             to_validate = data.keys()
+            if not set(data.keys()) >= set(mandatory.keys()):
+                raise NotValid(
+                    'missing keys: %s' % [
+                        k for k in mandatory if not k in data])
             for key, sub_schema in mandatory.items():
                 if key not in data:
                     raise NotValid('missing key: %r' % (key,))
@@ -164,25 +172,28 @@ class Schema(object):
 class Optional(object):
 
     def __init__(self, value):
-        self.value = value
+        self._orig_schema = value
         self.schema = parse_schema(value)
 
     def __repr__(self):
-        return "<Optional: %r>" % (self.value,)
+        return "<Optional: %r>" % (self._orig_schema,)
 
 
 class Not(Schema):
 
     def __init__(self, value):
-        self.value = value
+        self._orig_schema = value
         self.schema = parse_schema(value)
+
+    def __repr__(self):
+        return "<Not: %r>" % (self._orig_schema,)
 
     def validate(self, data):
         try:
             self.schema(data)
         except NotValid:
             return data
-        raise NotValid('%r was validated by %r' % (data, self.value))
+        raise NotValid('%r was validated by %r' % (data, self._orig_schema))
 
 
 class Or(Schema):
@@ -195,7 +206,7 @@ class Or(Schema):
         for sub in self.schemas:
             try:
                 return sub(data)
-            except NotValid:
+            except NotValid, e:
                 pass
         raise NotValid('%r not validated by %r' % (data, self.values))
 

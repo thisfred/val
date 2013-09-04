@@ -25,7 +25,7 @@ class OneOf(Schema):
                         data, self.values))
         if not validated:
             raise NotValid(
-                '%r validated not validated by %r' % (data, self.values))
+                '%r not validated by %r' % (data, self.values))
 
         return data
 
@@ -220,27 +220,6 @@ def datetime(value):
         valid_second_or_minute(second))
 
 
-FORMAT_CHECKERS = {
-    'date-time': datetime,
-    'email': email,
-    'hostname': hostname,
-    'ipv4': ipv4,
-    'ipv6': ipv6,
-    'uri': uri,
-    'regex': str}
-
-integer = And(int, lambda x: not isinstance(x, bool))
-
-TYPE_CHECKERS = {
-    'array': list,
-    'boolean': bool,
-    'integer': Or(integer, long),
-    'number': Or(integer, float, long),
-    'null': None,
-    'object': dict,
-    'string': basestring}
-
-
 def not_a_number(value):
     if isinstance(value, int):
         return False
@@ -263,37 +242,69 @@ def not_an_object(value):
     return not isinstance(value, dict)
 
 
-def get_multiple_validator(divisor):
+def get_multiple_validator(divisor, lookup, path):
     divisor = float(divisor)
     return lambda x: not_a_number(x) or ((x / divisor) == int(x / divisor))
 
 
-def get_maximum_validator(maximum, exclusive):
+def get_maximum_validator(schema, lookup, path):
+    maximum = schema['maximum']
+    exclusive = schema.get('exclusiveMaximum', False)
     if exclusive:
-        return lambda x: not_a_number(x) or x < maximum
-    return lambda x: not_a_number(x) or x <= maximum
+        validator = lambda x: not_a_number(x) or x < maximum
+    else:
+        validator = lambda x: not_a_number(x) or x <= maximum
+    lookup.add(path, 'maximum', validator)
+    lookup.add(path, 'exclusiveMaximum', exclusive)
+    return validator
 
 
-def get_minimum_validator(minimum, exclusive):
+def get_minimum_validator(schema, lookup, path):
+    minimum = schema['minimum']
+    exclusive = schema.get('exclusiveMinimum', False)
     if exclusive:
-        return lambda x: not_a_number(x) or x > minimum
-    return lambda x: not_a_number(x) or x >= minimum
+        validator = lambda x: not_a_number(x) or x > minimum
+    else:
+        validator = lambda x: not_a_number(x) or x >= minimum
+    lookup.add(path, 'minimum', validator)
+    lookup.add(path, 'exclusiveMinimum', exclusive)
+    return validator
 
 
 def get_has_keys_validator(keys):
     return lambda x: all(key in x for key in keys)
 
 
-def parse_dependency(dependency):
+def get_min_items_validator(number, lookup, path):
+    return lambda x: not_an_array(x) or len(x) >= number
+
+
+def get_pattern_validator(pattern, lookup, path):
+    regex = re.compile(pattern)
+    return lambda x: regex.findall(x) != []
+
+
+def unique_items_validator(value):
+    # XXX: nasty hack to make sure True is not seen as 1
+    seen = set()
+    for v in value:
+        if repr(v) in seen:
+            return False
+        seen.add(repr(v))
+    return True
+
+
+def parse_dependency(dependency, lookup, path):
     if isinstance(dependency, list):
         return Schema(get_has_keys_validator(dependency))
 
-    return parse_json_schema(dependency)
+    return _parse_json_schema(dependency, lookup, path).to_val()
 
 
-def get_dependencies_validator(dependencies):
+def get_dependencies_validator(dependencies, lookup, path):
     validators = {
-        key: parse_dependency(dep) for key, dep in dependencies.items()}
+        key: parse_dependency(dep, lookup, path + (key,)) for key, dep in
+        dependencies.items()}
 
     def validator(value):
         if not isinstance(value, dict):
@@ -308,43 +319,103 @@ def get_dependencies_validator(dependencies):
     return validator
 
 
-def get_properties_validator(properties, additional_properties,
-                             pattern_properties):
-    validator = {
-        key: parse_json_schema(prop) for key, prop in properties.items()}
-    if additional_properties is True:
-        validator[object] = object
-    elif additional_properties is not False:
-        validator[object] = parse_json_schema(additional_properties)
-    for key, value in pattern_properties.items():
+def _get_object_validator(schema, properties, additional_properties,
+                          pattern_properties, lookup, path):
+    if additional_properties is not False:
+        return lambda data: True
 
-        def get_f(pattern):
-            def f(x):
-                print key, x, pattern.findall(x)
-                return pattern.findall(x) != []
-            return f
+    p = tuple(properties.keys())
+    pp = tuple(
+        get_pattern_validator(k, None, None) for k in
+        pattern_properties.keys())
 
-        pattern = re.compile(key)
-        validator[Optional(get_f(pattern))] = parse_json_schema(value)
-    return Or(not_an_object, validator)
-
-
-def get_items_validator(items, additional_items):
-    if isinstance(items, dict):
-        return Or(not_an_array, [parse_json_schema(items)])
-
-    validators = [parse_json_schema(i) for i in items]
-    if isinstance(additional_items, dict):
-        additional_item_validator = parse_json_schema(additional_items)
-
-    def validate(value):
-        if not isinstance(value, list):
-            return True
-
-        if len(value) < len(validators):
+    def validate(data):
+        s = data.keys()
+        for key in p:
+            if key in s:
+                s.remove(key)
+        for key in s[:]:
+            for pattern in pp:
+                if pattern(key):
+                    s.remove(key)
+                    break
+        if s:
             return False
 
-        to_validate = value[:]
+        return True
+
+    return validate
+
+
+def _get_object_children_validator(schema, properties, additional_properties,
+                                   pattern_properties, lookup, path):
+    validator = {}
+    sub_path = path + ('properties',)
+    for key, prop in properties.items():
+        sub_validator = _parse_json_schema(
+            prop, lookup, sub_path + (key,)).to_val()
+        validator[Optional(key)] = sub_validator
+    if additional_properties is True or additional_properties == {}:
+        validator[object] = object
+    elif additional_properties is not False:
+        sub_validator = _parse_json_schema(
+            additional_properties, lookup,
+            path + ('additionalProperties',)).to_val()
+        validator[object] = sub_validator
+    if pattern_properties:
+        sub_path = path + ('patternProperties',)
+        for key, value in pattern_properties.items():
+            sub_validator = _parse_json_schema(
+                value, lookup, sub_path + (key,)).to_val()
+            validator[
+                Optional(
+                    get_pattern_validator(key, None, None))] = sub_validator
+    return validator
+
+
+def get_properties_validator(schema, lookup, path):
+    properties = schema.get('properties', {})
+    additional_properties = schema.get('additionalProperties', {})
+    pattern_properties = schema.get('patternProperties', {})
+    object_validator = _get_object_validator(
+        schema, properties, additional_properties, pattern_properties, lookup,
+        path)
+    children_validator = _get_object_children_validator(
+        schema, properties, additional_properties, pattern_properties, lookup,
+        path)
+    validator = Or(not_an_object, And(object_validator, children_validator))
+    lookup.add(path, None, validator)
+    return validator
+
+
+def _get_array_validator(schema, items, additional_items, lookup, path):
+    if isinstance(items, dict):
+        return lambda data: True
+
+    if additional_items is True or isinstance(additional_items, dict):
+        return lambda data: True
+
+    return lambda data: not isinstance(data, list) or len(data) <= len(items)
+
+
+def _get_array_children_validator(schema, items, additional_items, lookup,
+                                  path):
+    if isinstance(items, dict):
+        validator = Or(
+            not_an_array,
+            [_parse_json_schema(items, lookup, path + ('items',)).to_val()])
+        lookup.add(path, 'items', validator)
+        return validator
+
+    validators = [
+        _parse_json_schema(i, lookup, path + ('items', '%d' % n)).to_val() for
+        n, i in enumerate(items)]
+    if isinstance(additional_items, dict):
+        additional_item_validator = _parse_json_schema(
+            additional_items, lookup, path + ('additionalItems',)).to_val()
+
+    def validate(data):
+        to_validate = data[:]
         for validator in validators:
             validator.validate(to_validate.pop(0))
 
@@ -366,103 +437,247 @@ def get_items_validator(items, additional_items):
     return validate
 
 
-def get_min_items_validator(number):
-    return lambda x: not_an_array(x) or len(x) >= number
+def get_items_validator(schema, lookup, path):
+    items = schema.get('items', {})
+    additional_items = schema.get('additionalItems', {})
+    array_validator = _get_array_validator(
+        schema, items, additional_items, lookup, path)
+    children_validator = _get_array_children_validator(
+        schema, items, additional_items, lookup, path)
+    validator = And(array_validator, children_validator)
+    lookup.add(path, None, validator)
+    return validator
 
 
-def unique_items_validator(value):
-    # XXX: nasty hack to make sure True is not seen as 1
-    seen = set()
-    for v in value:
-        if repr(v) in seen:
-            return False
-        seen.add(repr(v))
-    return True
+def get_required_validator(schema, lookup, path):
+    validator = {k: object for k in schema}
+    validator[object] = object
+    return Schema(validator)
 
 
-NO_SCHEMA = object()
+def get_internal_reference_validator(lookup, path):
+
+    def validate(data):
+        validator = lookup.get(tuple(path.split('/')))
+        return validator.validates(data)
+
+    return validate
 
 
-def combine(schema1, schema2):
-    if schema1 is NO_SCHEMA:
-        return schema2
-    if schema2 is NO_SCHEMA:
-        return schema1
-    return And(schema1, schema2)
-
-
-def parse_json_schema(schema):
-    result = NO_SCHEMA
-    if schema == {}:
-        return Schema(object)
-    if 'format' in schema:
-        result = combine(result, FORMAT_CHECKERS[schema['format']])
-    if 'type' in schema:
-        types = schema['type']
-        if isinstance(types, list):
-            result = combine(result, Or(*[TYPE_CHECKERS[t] for t in types]))
+def get_ref_validator(schema, lookup, path):
+    ref = schema['$ref']
+    if ref.startswith('http'):
+        remote = lookup.get_remote(ref)
+        validator = _parse_json_schema(remote, lookup, path).to_val()
+    else:
+        scope = lookup.resolve_scope(path, ref)
+        if scope.startswith('http'):
+            remote = lookup.get_remote(ref)
+            validator = _parse_json_schema(remote, lookup, path).to_val()
         else:
-            result = combine(result, TYPE_CHECKERS[types])
-    if 'multipleOf' in schema:
-        divisor = schema['multipleOf']
-        result = combine(result, get_multiple_validator(divisor))
-    if 'maximum' in schema:
-        maximum = schema['maximum']
-        result = combine(result, get_maximum_validator(
-            maximum, exclusive=schema.get('exclusiveMaximum', False)))
-    if 'minimum' in schema:
-        minimum = schema['minimum']
-        result = combine(result, get_minimum_validator(
-            minimum, exclusive=schema.get('exclusiveMinimum', False)))
-    if 'dependencies' in schema:
-        dependencies = schema['dependencies']
-        result = combine(result, get_dependencies_validator(dependencies))
-    if ('properties' in schema or 'patternProperties' in schema or
-            'additionalProperties' in schema):
-        properties = schema.get('properties', {})
-        additional_properties = schema.get('additionalProperties', {})
-        pattern_properties = schema.get('patternProperties', {})
-        result = combine(
-            result,
-            get_properties_validator(
-                properties, additional_properties=additional_properties,
-                pattern_properties=pattern_properties))
-    if 'minProperties' in schema:
-        result = combine(
-            result, Or(
-                not_an_object,
-                lambda x: len(x.keys()) >= schema['minProperties']))
-    if 'anyOf' in schema:
-        result = combine(
-            result, Or(*[parse_json_schema(s) for s in schema['anyOf']]))
-    if 'allOf' in schema:
-        result = combine(
-            result, And(*[parse_json_schema(s) for s in schema['allOf']]))
-    if 'oneOf' in schema:
-        result = combine(
-            result, OneOf(*[parse_json_schema(s) for s in schema['oneOf']]))
-    if 'minLength' in schema:
-        result = combine(
-            result, lambda x: not_a_string(x) or len(x) >= schema['minLength'])
-    if 'maxLength' in schema:
-        result = combine(
-            result, lambda x: not_a_string(x) or len(x) <= schema['maxLength'])
-    if 'items' in schema or 'additionalItems' in schema:
-        additional_items = schema.get('additionalItems', {})
-        result = combine(
-            result,
-            get_items_validator(
-                schema.get('items', {}), additional_items=additional_items))
-    if 'minItems' in schema:
-        result = combine(result, get_min_items_validator(schema['minItems']))
-    if 'not' in schema:
-        result = combine(result, Not(parse_json_schema(schema['not'])))
-    if 'uniqueItems' in schema:
-        if schema['uniqueItems']:
-            result = combine(result, unique_items_validator)
-    if '$ref' in schema:
-        ref = schema['$ref']
-        if ref.startswith('http'):
-            remote = json.loads(requests.get(ref).content)
-            result = combine(result, parse_json_schema(remote))
-    return Schema(result)
+            validator = get_internal_reference_validator(lookup, ref)
+            lookup.add_reference(ref)
+    return validator
+
+
+def parse_definitions(schema, lookup, path):
+    for key, value in schema.items():
+        lookup.add(
+            path, key, _parse_json_schema(
+                value, lookup, path + (key,)).to_val())
+
+
+integer = And(int, Not(bool))
+
+FORMAT_CHECKERS = {
+    'date-time': datetime,
+    'email': email,
+    'hostname': hostname,
+    'ipv4': ipv4,
+    'ipv6': ipv6,
+    'uri': uri,
+    'regex': str}
+
+TYPE_CHECKERS = {
+    'array': list,
+    'boolean': bool,
+    'integer': Or(integer, long),
+    'null': None,
+    'number': Or(integer, float, long),
+    'object': dict,
+    'string': basestring}
+
+SIMPLE_VALIDATORS = {
+    'enum': lambda x, lookup, path: Or(*x),
+    'format': lambda x, lookup, path: FORMAT_CHECKERS[x],
+    'type': lambda x, lookup, path: Or(
+        *[TYPE_CHECKERS[t] for t in x]) if isinstance(x, list) else
+        TYPE_CHECKERS[x],
+    'multipleOf': get_multiple_validator,
+    'dependencies': get_dependencies_validator,
+    'pattern': get_pattern_validator,
+    'anyOf': lambda x, lookup, path: Or(
+        *[_parse_json_schema(s, lookup, path + ('%d' % n,)).to_val() for n, s
+          in enumerate(x)]),
+    'allOf': lambda x, lookup, path: And(
+        *[_parse_json_schema(s, lookup, path + ('%d' % n,)).to_val() for n, s
+          in enumerate(x)]),
+    'minLength':
+        lambda x, lookup, path: lambda data: not_a_string(
+            data) or len(data) >= x,
+    'maxLength':
+        lambda x, lookup, path: lambda data: not_a_string(
+            data) or len(data) <= x,
+    'maxItems': lambda x, lookup, path:
+        lambda data: not_an_array(data) or len(data) <= x,
+    'not': lambda x, lookup, path: Not(_parse_json_schema(
+        x, lookup, path).to_val()),
+    'uniqueItems': lambda x, lookup, path:
+        unique_items_validator if x else lambda data: data,
+    'required': get_required_validator,
+    'minItems': get_min_items_validator,
+    'oneOf': lambda x, lookup, path: OneOf(
+        *[_parse_json_schema(s, lookup, path + ('%d' % n,)).to_val() for n, s
+          in enumerate(x)]),
+    'minProperties': lambda x, lookup, path: Or(
+        not_an_object, lambda data: len(data.keys()) >= x)}
+
+COMPOUND_VALIDATORS = {
+    ('maximum', 'exclusiveMaximum'): get_maximum_validator,
+    ('minimum', 'exclusiveMinimum'): get_minimum_validator,
+    ('properties', 'patternProperties', 'additionalProperties'):
+        get_properties_validator,
+    ('items', 'additionalItems'): get_items_validator,
+    ('$ref',): get_ref_validator}
+
+NON_VALIDATORS = {
+    'default': lambda x, lookup, path: x,
+    'definitions': parse_definitions,
+    'id': lambda x, lookup, path: lookup.add_scope(path, x)}
+
+
+class Parsed(object):
+
+    def __init__(self):
+        self.validators = []
+        self.lookup = None
+
+    def to_val(self):
+        if len(self.validators) == 1:
+            return Schema(self.validators[0])
+        else:
+            return And(*self.validators)
+
+    def add_validator(self, validator):
+        self.validators.append(validator)
+
+
+class Lookup(object):
+
+    def __init__(self):
+        self._lookup = {}
+        self._references = []
+        self._scopes = {}
+        self._cache = {}
+
+    def __repr__(self):
+        return repr(self._lookup)
+
+    def __str__(self):
+        return str(self._lookup)
+
+    def get(self, path):
+        try:
+            return self._lookup[path]
+        except KeyError:
+            raise NotValid("%s is not a valid reference." % path)
+
+    def get_remote(self, address):
+        if '#' in address:
+            address, path = address.split('#')
+        else:
+            path = ''
+        if address not in self._cache:
+            self._cache[address] = json.loads(requests.get(address).content)
+        document = self._cache[address]
+        return document
+
+    def add(self, path, key, value):
+        if key is None:
+            self._lookup[path] = value
+        else:
+            self._lookup[path + (key,)] = value
+
+    def add_reference(self, path):
+        self._references.append(tuple(path.split('/')))
+
+    def add_scope(self, path, new_id):
+        path_minus_id = path[:-1]
+        self._scopes[path_minus_id] = new_id
+        return self._scopes[path_minus_id]
+
+    def resolve_scope(self, path, ref):
+        scopes = sorted(
+            (k, v) for k, v in self._scopes.items() if path[:len(k)] == k)
+        print scopes
+        result = ''
+        for s in [v for _, v in scopes] + [ref]:
+            if result and result[-1] == '#' and v[0] == '#':
+                result += s[1:]
+            else:
+                result += s
+        return result
+
+    def cleanup(self):
+        self._lookup = {
+            k: v for k, v in self._lookup.items() if k in self._references}
+
+
+def _parse_json_schema(schema, lookup=None, path=None):
+    if not isinstance(schema, dict):
+        lookup.add(path, None, schema)
+        return schema
+    if lookup is None:
+        lookup = Lookup()
+    if path is None:
+        path = ('#',)
+    parsed = Parsed()
+    for key in NON_VALIDATORS:
+        if key in schema:
+            lookup.add(
+                path, key,
+                NON_VALIDATORS[key](schema[key], lookup, path + (key,)))
+    skip = ['$schema', 'description'] + NON_VALIDATORS.keys()
+    for key, value in schema.items():
+        if key in skip:
+            continue
+        if key in SIMPLE_VALIDATORS:
+            validator = SIMPLE_VALIDATORS[key](
+                schema[key], lookup, path + (key,))
+            parsed.add_validator(validator)
+            lookup.add(path, key, validator)
+            continue
+        found = False
+        for validator_key in COMPOUND_VALIDATORS:
+            if key == validator_key or key in validator_key:
+                if isinstance(validator_key, tuple):
+                    skip.extend(list(validator_key))
+                validator = COMPOUND_VALIDATORS[validator_key](
+                    schema, lookup, path)
+                parsed.add_validator(validator)
+                found = True
+                break
+        if found:
+            continue
+        validator = _parse_json_schema(value, lookup, path + (key,))
+        parsed.add_validator(validator)
+        lookup.add(path, key, validator)
+    lookup.add(path, None, parsed.to_val())
+    parsed.lookup = lookup
+    return parsed
+
+
+def parse_json_schema(json_schema):
+    parsed = _parse_json_schema(json_schema)
+    parsed.lookup.cleanup()
+    return parsed.to_val()

@@ -24,11 +24,12 @@ setup(
     author='Eric Casteleijn',
     author_email='thisfred@gmail.com',
     description='Python object validator',
+    requires='jsonpointer',
     license='BSD',
     keywords='validation validators',
     url='http://github.com/thisfred/val',
     long_description=open('README.md').read(),
     packages=['val'],
     cmdclass={'test': PyTest},
-    tests_require=['pytest', 'Pyth'],
+    tests_require=['requests', 'pytest', 'jsonpointer'],
     test_suite='tests')
