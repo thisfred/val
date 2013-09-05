@@ -31,6 +31,7 @@ anecdotal evidence that it's around 10x faster than both schema and flatland.
 way.)
 
 The schemas understood by lazyval are very similar to the ones in schema:
+
     from val import Schema, Or
     
     schema = Schema({
