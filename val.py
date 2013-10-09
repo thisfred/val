@@ -5,6 +5,8 @@ Eric Casteleijn, <thisfred@gmail.com>
 
 __version__ = '0.2.0'
 
+NOT_SUPPLIED = object()
+
 
 class NotValid(Exception):
 
@@ -29,11 +31,14 @@ def parse_schema(schema):
     if isinstance(schema, dict):
 
         optional = {}
+        missing = {}
         mandatory = {}
         types = {}
         for key, value in schema.items():
             if isinstance(key, Optional):
                 optional[key.value] = parse_schema(value)
+                if key.default is not NOT_SUPPLIED:
+                    missing[key.value] = (key.default, key.null_values)
                 continue
 
             if type(key) is type:
@@ -62,6 +67,12 @@ def parse_schema(schema):
                         validated[key] = optional[key](value)
                     except NotValid, e:
                         raise NotValid('%s: %s' % (key, e.msg))
+                    if key in missing:
+                        _, null_values = missing[key]
+                        if null_values is not NOT_SUPPLIED:
+                            if validated[key] in null_values:
+                                continue
+                        del missing[key]
                     continue  # pragma: nocover
                 for key_schema, value_schema in types.items():
                     if not isinstance(key, key_schema):
@@ -75,7 +86,8 @@ def parse_schema(schema):
                 else:
                     raise NotValid('key %r and value %s not matched' % (
                         key, value))
-
+            for key, (default, _) in missing.items():
+                validated[key] = default
             return validated
 
         return dict_validator
@@ -147,8 +159,10 @@ class Schema(object):
 
 class Optional(object):
 
-    def __init__(self, value):
+    def __init__(self, value, default=NOT_SUPPLIED, null_values=NOT_SUPPLIED):
         self.value = value
+        self.default = default
+        self.null_values = null_values
 
     def __repr__(self):
         return "<Optional: %r>" % (self.value,)
