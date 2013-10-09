@@ -3,7 +3,7 @@ Copyright (c) 2013
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 NOT_SUPPLIED = object()
 
@@ -31,14 +31,14 @@ def parse_schema(schema):
     if isinstance(schema, dict):
 
         optional = {}
-        missing = {}
+        defaults = {}
         mandatory = {}
         types = {}
         for key, value in schema.items():
             if isinstance(key, Optional):
                 optional[key.value] = parse_schema(value)
                 if key.default is not NOT_SUPPLIED:
-                    missing[key.value] = (key.default, key.null_values)
+                    defaults[key.value] = (key.default, key.null_values)
                 continue
 
             if type(key) is type:
@@ -48,6 +48,7 @@ def parse_schema(schema):
             mandatory[key] = parse_schema(value)
 
         def dict_validator(data):
+            missing = defaults.keys()
             if not isinstance(data, dict):
                 raise NotValid('%r is not of type dict' % (data,))
             validated = {}
@@ -68,11 +69,11 @@ def parse_schema(schema):
                     except NotValid, e:
                         raise NotValid('%s: %s' % (key, e.msg))
                     if key in missing:
-                        _, null_values = missing[key]
+                        _, null_values = defaults[key]
                         if null_values is not NOT_SUPPLIED:
                             if validated[key] in null_values:
                                 continue
-                        del missing[key]
+                        missing.remove(key)
                     continue  # pragma: nocover
                 for key_schema, value_schema in types.items():
                     if not isinstance(key, key_schema):
@@ -86,8 +87,8 @@ def parse_schema(schema):
                 else:
                     raise NotValid('key %r and value %s not matched' % (
                         key, value))
-            for key, (default, _) in missing.items():
-                validated[key] = default
+            for key in missing:
+                validated[key] = defaults[key][0]
             return validated
 
         return dict_validator

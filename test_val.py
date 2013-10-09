@@ -93,6 +93,20 @@ class TestVal(TestCase):
             {'key': 'val',
              'key2': 'val2'})
 
+    def test_regression_validating_twice_works(self):
+        schema = Schema({
+            'key': str,
+            Optional('key2', default='val2', null_values=(None,)): Or(
+                str, None)})
+        self.assertEquals(
+            schema.validate({'key': 'val', 'key2': 'other_val'}),
+            {'key': 'val',
+             'key2': 'other_val'})
+        self.assertEquals(
+            schema.validate({'key': 'new_val'}),
+            {'key': 'new_val',
+             'key2': 'val2'})
+
     def test_dictionary_optional_null_value(self):
         schema = Schema({
             'key': str,
