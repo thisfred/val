@@ -3,7 +3,7 @@ Copyright (c) 2013
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 NOT_SUPPLIED = object()
 
