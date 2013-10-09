@@ -129,10 +129,10 @@ Elements that can occur in a schema are:
     * `{Optional('foo'): 12}` matches `{'foo': 12}` and `{}` but not
       `{'foo': 13}` or `{'foo': 'bar'}`
     * `{Optional('foo', default=13): int}` matches `{'foo': 12}` and `{}`
-      (which will become `{'foo': 13}` but not `{'foo': 'bar'}`
+      (which will become `{'foo': 13}`) but not `{'foo': 'bar'}`
     * `{Optional('foo', default=13, null_values=(0, None): Or(int, None)}`
-      matches `{'foo': 12}` and `{'foo': 0}` (which will become `{'foo': 13}`
-      and `{'foo': None}` (which will also become `{'foo': 13}` but not
+      matches `{'foo': 12}` and `{'foo': 0}` (which will become `{'foo': 13}`)
+      and `{'foo': None}` (which will also become `{'foo': 13}`) but not
       `{'foo': 'bar'}`
 
   * `Ordered([element1, element2, element3])` will validate a list with
