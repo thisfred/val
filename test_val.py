@@ -86,6 +86,35 @@ class TestVal(TestCase):
             str(schema),
             "{<Optional: 'key2'>: <type 'str'>, 'key': <type 'str'>}")
 
+    def test_dictionary_optional_missing(self):
+        schema = Schema({'key': str, Optional('key2', default='val2'): str})
+        self.assertEquals(
+            schema.validate({'key': 'val'}),
+            {'key': 'val',
+             'key2': 'val2'})
+
+    def test_dictionary_optional_null_value(self):
+        schema = Schema({
+            'key': str,
+            Optional('key2', default='val2', null_values=(None,)): Or(
+                basestring, None)})
+        self.assertEquals(
+            schema.validate({
+                'key': 'val',
+                'key2': None}),
+            {'key': 'val',
+             'key2': 'val2'})
+
+    def test_dictionary_optional_not_missing(self):
+        schema = Schema({'key': str, Optional(
+            'key2', default='val2'): Or(basestring, None)})
+        self.assertEquals(
+            schema.validate({
+                'key': 'val',
+                'key2': None}),
+            {'key': 'val',
+             'key2': None})
+
     def test_dictionary_wrong_key(self):
         schema = Schema({'key': str})
         self.assertRaises(NotValid, schema.validate, {'not_key': 'val'})
