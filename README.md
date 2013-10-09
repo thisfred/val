@@ -21,8 +21,7 @@ meant to validate API inputs, rather than direct user input, so the burden is
 somewhat shifted to the client side to send valid requests. I do not suggest
 using val for validating web form input.
 
-Current status is: moving towards 0.1 release, somewhat stable, somewhat
-complete.
+Current status is: used in production code, but only in one place that I know of. ;)
 
 I have not optimized much, but for the kind of schemas I need (specifically: to
 validate JSON that has been loaded into python structures,) I have extremely
