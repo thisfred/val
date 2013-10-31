@@ -3,18 +3,15 @@ Copyright (c) 2013
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
 
 NOT_SUPPLIED = object()
 
 
 class NotValid(Exception):
 
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
+    def __init__(self, *args):
+        self.args = args
 
 
 def parse_schema(schema):
@@ -62,7 +59,7 @@ def parse_schema(schema):
                 try:
                     validated[key] = sub_schema(data[key])
                 except NotValid, e:
-                    raise NotValid('%s: %s' % (key, e.msg))
+                    raise NotValid('%s: %s' % (key, e.args))
                 to_validate.remove(key)
             for key in to_validate:
                 value = data[key]
@@ -70,7 +67,7 @@ def parse_schema(schema):
                     try:
                         validated[key] = optional[key](value)
                     except NotValid, e:
-                        raise NotValid('%s: %s' % (key, e.msg))
+                        raise NotValid('%s: %s' % (key, e.args))
                     if key in missing:
                         _, null_values = defaults[key]
                         if null_values is not NOT_SUPPLIED:
@@ -184,9 +181,8 @@ class Or(Schema):
             try:
                 return sub(data)
             except NotValid, e:
-                errors.append(e.msg)
-        raise NotValid('%r not validated:\n\n  - %s' % (
-            data, '\n  - '.join(errors)))
+                errors.extend(e.args)
+        raise NotValid(*errors)
 
     def __repr__(self):
         return "<%s>" % (" or ".join(["%r" % (v,) for v in self.values]),)

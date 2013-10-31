@@ -353,7 +353,8 @@ class TestVal(TestCase):
     def test_or_schema(self):
         self.assertEquals(Schema(Or(int, dict)).validate(5), 5)
         self.assertEquals(Schema(Or(int, dict)).validate({}), {})
-        self.assertRaises(NotValid, Schema(Or(int, dict)).validate, 'hai')
+        with self.assertRaises(NotValid):
+            Schema(Or(int, dict)).validate('hai')
         self.assertEquals(Schema(Or(int)).validate(4), 4)
         self.assertRaises(NotValid, Schema(Or()).validate, 2)
 
