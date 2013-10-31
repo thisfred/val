@@ -9,9 +9,7 @@ NOT_SUPPLIED = object()
 
 
 class NotValid(Exception):
-
-    def __init__(self, *args):
-        self.args = args
+    pass
 
 
 def parse_schema(schema):
