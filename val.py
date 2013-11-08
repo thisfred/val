@@ -123,7 +123,7 @@ def parse_schema(schema):
                 else:
                     raise NotValid('%r does not satisfy %r' % (data, schema))
             except (TypeError, ValueError), e:
-                raise NotValid(e)
+                raise NotValid(*e.args)
 
         return callable_validator
 
@@ -210,7 +210,7 @@ class Convert(Schema):
         try:
             return self.convert(data)
         except (TypeError, ValueError), e:
-            raise NotValid(e)
+            raise NotValid(*e.args)
 
     def __repr__(self):
         return '<Convert: %r>' % (self.convert,)
