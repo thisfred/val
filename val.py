@@ -3,13 +3,20 @@ Copyright (c) 2013
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.3.3'
+__version__ = '0.4.0'
 
 NOT_SUPPLIED = object()
 
 
 class NotValid(Exception):
     pass
+
+
+def get_repr(thing):
+    return (
+        getattr(thing, 'func_doc') or
+        getattr(thing, 'func_name') or
+        repr(thing))
 
 
 def parse_schema(schema):
@@ -121,7 +128,8 @@ def parse_schema(schema):
                 if schema(data):
                     return data
                 else:
-                    raise NotValid('%r does not satisfy %r' % (data, schema))
+                    raise NotValid(
+                        "%r not validated by '%s'" % (data, get_repr(schema)))
             except (TypeError, ValueError), e:
                 raise NotValid(*e.args)
 
@@ -138,15 +146,22 @@ def parse_schema(schema):
 
 class Schema(object):
 
-    def __init__(self, schema):
+    def __init__(self, schema, additional_validators=None):
         self._orig_schema = schema
         self.schema = parse_schema(schema)
+        self.additional_validators = additional_validators or []
 
     def __repr__(self):
         return repr(self._orig_schema)
 
     def validate(self, data):
-        return self.schema(data)
+        validated = self.schema(data)
+        for validator in self.additional_validators:
+            if not validator(validated):
+                raise NotValid(
+                    "%s not validated by additional validator '%s'" % (
+                        validated, get_repr(validator)))
+        return validated
 
     def validates(self, data):
         try:

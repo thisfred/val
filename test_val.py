@@ -208,6 +208,31 @@ class TestVal(TestCase):
         schema = Schema(lambda x: x < 2)
         self.assertEquals(schema.validate(1), 1)
 
+    def test_callable_gives_readable_error(self):
+
+        def less_than_two(value):
+            "Must be less than two."
+            return value < 2
+
+        schema = Schema(less_than_two)
+        with self.assertRaises(NotValid) as ctx:
+            schema.validate("foo")
+        self.assertEquals(
+            ctx.exception.args,
+            ("'foo' not validated by 'Must be less than two.'",))
+
+    def test_callable_gives_sensible_error(self):
+
+        def less_than_two(value):
+            return value < 2
+
+        schema = Schema(less_than_two)
+        with self.assertRaises(NotValid) as ctx:
+            schema.validate("foo")
+        self.assertEquals(
+            ctx.exception.args,
+            ("'foo' not validated by 'less_than_two'",))
+
     def test_convert(self):
         schema = Convert(lambda x: x + 2)
         self.assertEquals(schema.validate(1), 3)
@@ -441,3 +466,22 @@ class TestVal(TestCase):
         self.assertEquals(schema.validate(data), data)
         data = {'ID': 10, 'FILE': None}
         self.assertEquals(schema.validate(data), data)
+
+    def test_schema_with_additional_validators(self):
+
+        def total_greater_than_12(value):
+            """foo + bar > 12"""
+            return value['foo'] + value['bar'] > 12
+
+        schema = Schema({
+            'foo': int,
+            'bar': int},
+            additional_validators=(total_greater_than_12,))
+
+        self.assertTrue(schema.validates({'foo': 7, 'bar': 7}))
+        with self.assertRaises(NotValid) as ctx:
+            schema.validate({'foo': 5, 'bar': 7})
+        self.assertEquals(
+            ctx.exception.args, (
+                "{'foo': 5, 'bar': 7} not validated by additional validator "
+                "'foo + bar > 12'",))
