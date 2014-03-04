@@ -95,8 +95,8 @@ Elements that can occur in a schema are:
   * `Convert(callable)`, will call the callable on the value being validated,
     and substitute the result of that call for the original value in the
     validated structure. TypeErrors or ValueErrors in the call will result in a
-    NotValid exception. This and supplying a default value to an Optional key
-    are the only ways to the data being validated.
+    NotValid exception. This (or supplying a default value to an Optional key)
+    is the only ways to modify the data being validated during the validation.
     Convert is useful to convert between representations (for
     instance from timestamps to datetime objects, or uuid string
     representations to uuid objects, etc.)
