@@ -89,7 +89,7 @@ Lists
 
 Lists of elements that will validate list values all of whose elements are
 validated by one of the elements in the elements in the list (order or
-number of elements do not matter, see `Ordered()`)::
+number of elements do not matter, see `Ordered()`_)::
 
     >>> Schema([str, int]).validates([12, 'foo', 'bar', 'baz', 42])
     True
