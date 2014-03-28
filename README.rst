@@ -57,14 +57,14 @@ The schemas understood by val are very similar to the ones in schema::
 
 Elements that can occur in a schema are: 
 
-  * simple literal values that will match equal values::
+Simple literal values that will match equal values::
 
     >>> Schema(12).validates(12)
     True
     >>> Schema('foo').validates('foo')
     True
 
-  * types that will validate anything that is an instance of the type::
+Types that will validate anything that is an instance of the type::
 
     >>> Schema(int).validates(12)
     True
@@ -82,9 +82,9 @@ Elements that can occur in a schema are:
     >>> Schema(object).validates([foo, (12, 43, 'strawberries'), {}])
     True
 
-  * lists of elements that will validate list values all of whose elements are
-    validated by one of the elements in the elements in the list (order or
-    number of elements do not matter, see Ordered)::
+Lists of elements that will validate list values all of whose elements are
+validated by one of the elements in the elements in the list (order or
+number of elements do not matter, see Ordered)::
 
     >>> Schema([str, int]).validates([12, 'foo', 'bar', 'baz', 42])
     True
@@ -96,9 +96,9 @@ Elements that can occur in a schema are:
     >>> schema.validates(['bar', 'bar', 13, 'bar'])
     True
 
-  * dictionaries with elements as keys and values, that will validate
-    dictionaries all of whose key value pairs are validated by at least one of
-    the key value pairs in the schema::
+Dictionaries with elements as keys and values, that will validate
+dictionaries all of whose key value pairs are validated by at least one of
+the key value pairs in the schema::
 
     >>> schema = Schema({'foo': int, str: int})
     >>> schema.validates({'foo': 83})
@@ -114,10 +114,9 @@ Elements that can occur in a schema are:
         ...
     NotValid: 12: 'bar' not matched
 
-  * callables (that aren't of type `type`) will validate any value for which
-    the callable returns a truthy value. TypeErrors or ValueErrors in the call
-    will result in a NotValid exception. (I will show how to get rid of the
-    ugly `'<lambda>'` in a bit)::
+Callables (that aren't of type `type`) will validate any value for which
+the callable returns a truthy value. TypeErrors or ValueErrors in the call
+will result in a NotValid exception::
 
     >>> schema = Schema(lambda x: x < 10)
     >>> schema.validates(9)
@@ -127,14 +126,14 @@ Elements that can occur in a schema are:
         ...
     NotValid: 10 not validated by '<lambda>'
 
-  * `Convert(callable)`, will call the callable on the value being validated,
-    and substitute the result of that call for the original value in the
-    validated structure. TypeErrors or ValueErrors in the call will result in a
-    NotValid exception. This (or supplying a default value to an Optional key)
-    is the only ways to modify the data being validated during the validation.
-    Convert is useful to convert between representations (for
-    instance from timestamps to datetime objects, or uuid string
-    representations to uuid objects, etc.)::
+`Convert(callable)`, will call the callable on the value being validated,
+and substitute the result of that call for the original value in the
+validated structure. TypeErrors or ValueErrors in the call will result in a
+NotValid exception. This (or supplying a default value to an Optional key)
+is the only ways to modify the data being validated during the validation.
+Convert is useful to convert between representations (for
+instance from timestamps to datetime objects, or uuid string
+representations to uuid objects, etc.)::
 
     >>> from val import Convert
     >>> schema = Schema(Convert(int))
@@ -147,8 +146,8 @@ Elements that can occur in a schema are:
         ...
     NotValid: invalid literal for int() with base 10: 'foo'
 
-  * `Or(element1, element2, ...)` will validate a value validated by any of the
-    elements passed into the Or::
+`Or(element1, element2, ...)` will validate a value validated by any of the
+elements passed into the Or::
 
     >>> schema = Or('foo', int)
     >>> schema.validates('foo')
@@ -160,8 +159,8 @@ Elements that can occur in a schema are:
         ...
     NotValid: 'bar' is not equal to 'foo', 'bar' is not of type <type 'int'>
 
-  * `And(element1, element2, ...)` will validate a value validated by all of
-    the elements passed into the And::
+`And(element1, element2, ...)` will validate a value validated by all of
+the elements passed into the And::
 
     >>> from val import And
     >>> schema = And(Convert(int), lambda x: x < 12, lambda x: x >= 3)
@@ -182,14 +181,14 @@ Elements that can occur in a schema are:
         ...
     NotValid: invalid literal for int() with base 10: 'foo'
 
-  * `{Optional(simple_literal_key): value}` will match any key value pair that
-    matches `simple_literal_key: value` but the schema will still validate
-    dictionary values with no matching key.
+`{Optional(simple_literal_key): value}` will match any key value pair that
+matches `simple_literal_key: value` but the schema will still validate
+dictionary values with no matching key.
 
-    `Optional` can take an optional `default` parameter, whose value will be
-    substituted in the result if the key is not in the data, *or*, when
-    a `null_values` parameter is also specified, if the key has a value that is
-    one of the null values::
+`Optional` can take an optional `default` parameter, whose value will be
+substituted in the result if the key is not in the data, *or*, when
+a `null_values` parameter is also specified, if the key has a value that is
+one of the null values::
 
     >>> schema = Schema({
     ...     Optional('foo'): 12})
@@ -226,10 +225,10 @@ Elements that can occur in a schema are:
     >>> schema.validate({'foo': None})
     {'foo': 13}
 
-  * `Ordered([element1, element2, element3])` will validate a list with
-    *exactly* 3 elements, each of which must be validated by the corresponding
-    element in the schema. If order and number of elements do not matter, just
-    use a list::
+`Ordered([element1, element2, element3])` will validate a list with
+*exactly* 3 elements, each of which must be validated by the corresponding
+element in the schema. If order and number of elements do not matter, just
+use a list::
 
     >>> from val import Ordered
     >>> schema = Ordered([int, basestring, int, None])
@@ -244,7 +243,7 @@ Elements that can occur in a schema are:
         ...
     NotValid: [12, u'fnord', 42, None, 12] does not have exactly 4 values. (Got 5.)
 
-  * Other parsed schema objects. So this works::
+Other parsed schema objects. So this works::
 
     >>> sub_schema = Schema({'foo': str, str: int})
     >>> schema = Schema(
