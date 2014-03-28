@@ -1,7 +1,7 @@
 val
 ===
 
-![val](http://smartassradio.com/wp-content/gallery/site-images/fat-val-kilmer.jpg)
+.. image:: http://smartassradio.com/wp-content/gallery/site-images/fat-val-kilmer.jpg
 
 A validator for arbitrary Python objects.
 
@@ -125,6 +125,19 @@ will result in a NotValid exception::
     Traceback (most recent call last): 
         ...
     NotValid: 10 not validated by '<lambda>'
+
+To get nicer Exceptions, use functions rather than lambdas::
+
+    >>> def less_than_ten(n):
+    ...     """Must be less than 10."""
+    ...     return n < 10
+    >>> schema = Schema(less_than_ten)
+    >>> schema.validates(9)
+    True
+    >>> schema.validate(10)
+    Traceback (most recent call last): 
+        ...
+    NotValid: 10 not validated by 'Must be less than 10.'
 
 `Convert(callable)`, will call the callable on the value being validated,
 and substitute the result of that call for the original value in the
