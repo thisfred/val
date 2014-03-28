@@ -1,8 +1,6 @@
 val
 ===
 
-.. image:: http://smartassradio.com/wp-content/gallery/site-images/fat-val-kilmer.jpg
-
 A validator for arbitrary Python objects.
 
 Inspired by some of the wonderful ideas in schema and flatland: 
