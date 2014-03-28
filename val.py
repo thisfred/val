@@ -1,7 +1,7 @@
 """
 val: A validator for arbitrary python objects.
 
-Copyright (c) 2013
+Copyright (c) 2013-2014
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
@@ -60,7 +60,7 @@ def build_callable_validator(function):
                 return data
 
         except (TypeError, ValueError, NotValid), e:
-            raise NotValid(*e.args)
+            raise NotValid(', '.join(e.args))
 
         raise NotValid("%r not validated by '%s'" % (data, get_repr(function)))
 
@@ -122,7 +122,7 @@ def _validate_mandatory_keys(mandatory, validated, data, to_validate):
         try:
             validated[key] = sub_schema(data[key])
         except NotValid, e:
-            raise NotValid('%s: %s' % (key, e.args))
+            raise NotValid('%r: %s' % (key, ', '.join(e.args)))
         to_validate.remove(key)
 
 
@@ -131,7 +131,7 @@ def _validate_optional_key(key, missing, value, defaults, validated, optional):
     try:
         validated[key] = optional[key](value)
     except NotValid, e:
-        raise NotValid('%s: %s' % (key, e.args))
+        raise NotValid('%r: %s' % (key, ', '.join(e.args)))
     if key in missing:
         _, null_values = defaults[key]
         if null_values is not NOT_SUPPLIED:
@@ -152,7 +152,7 @@ def _validate_type_key(key, value, types, validated):
         else:
             break
     else:
-        raise NotValid('key %r and value %s not matched' % (key, value))
+        raise NotValid('%r: %r not matched' % (key, value))
 
 
 def _validate_other_keys(optional, types, missing, defaults, validated, data,
@@ -272,7 +272,7 @@ class Or(BaseSchema):
                 return sub(data)
             except NotValid, e:
                 errors.extend(e.args)
-        raise NotValid(*errors)
+        raise NotValid(', '.join(errors))
 
     def __repr__(self):
         return "<%s>" % (" or ".join(["%r" % (v,) for v in self.values]),)
@@ -306,7 +306,7 @@ class Convert(BaseSchema):
         try:
             return self.convert(data)
         except (TypeError, ValueError), e:
-            raise NotValid(*e.args)
+            raise NotValid(', '.join(e.args))
 
     def __repr__(self):
         return '<Convert: %r>' % (self.convert,)
@@ -324,8 +324,8 @@ class Ordered(BaseSchema):
         """Validate if the values are validated one by one in order."""
         if self.length != len(values):
             raise NotValid(
-                "Does not have exactly %d values. (Got %d.)" % (
-                    self.length, len(values)))
+                "%r does not have exactly %d values. (Got %d.)" % (
+                    values, self.length, len(values)))
         return type(self.schemas)(
             self.schemas[i].validate(v) for i, v in enumerate(values))
 

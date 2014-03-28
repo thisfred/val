@@ -4,6 +4,7 @@ Eric Casteleijn, <thisfred@gmail.com>
 Vladimir Keleshev, <vladimir@keleshev.com>
 """
 
+import doctest
 from tempfile import mkstemp
 from val import NotValid, Optional, Or, And, Schema, Convert, Ordered
 from unittest import TestCase
@@ -485,3 +486,7 @@ class TestVal(TestCase):
             ctx.exception.args, (
                 "{'foo': 5, 'bar': 7} not validated by additional validator "
                 "'foo + bar > 12'",))
+
+    def test_documentation(self):
+        result = doctest.testfile("README.rst")
+        self.assertEquals(result.failed, 0)
