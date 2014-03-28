@@ -3,8 +3,8 @@ val
 
 A validator for arbitrary Python objects.
 
-Inspired by some of the wonderful ideas in schema_ and
-flatland_ many of which I outright stole.
+Inspired by some of the wonderful ideas in schema_ and flatland_, many of which
+I outright stole.
 
 The goal is to make validation faster than either, while keeping the very
 pythonic and minimal style of schema_ , at the expense of more advanced
@@ -14,9 +14,9 @@ Current status is: used in production code, but only in one place that I know
 of.
 
 I have not optimized much, but for the kind of schemas I need (specifically: to
-validate JSON that has been loaded into python structures,) I have some
-anecdotal evidence that it's around 10x faster than both schema and flatland.
-(Again, that is mostly because it does way less.)
+validate JSON that has been loaded into python structures,) but I have some
+anecdotal evidence that it's around ten times faster than both schema and
+flatland. (Again, that is mostly because it does way less.)
 
 The schemas understood by val are very similar to the ones in schema_ , but not
 100% compatible::
