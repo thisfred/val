@@ -3,30 +3,20 @@ val
 
 A validator for arbitrary Python objects.
 
-Inspired by some of the wonderful ideas in schema and flatland: 
-
-https://github.com/halst/schema
-
-http://discorporate.us/projects/flatland/
-
-many of which I outright stole.
+Inspired by some of the wonderful ideas in **schema** [#schema]_ and **flatland**
+[#flatland]_ many of which I outright stole.
 
 The goal is to make validation faster than either, while keeping the very
-pythonic and minimal style of schema, at the expense of more advanced features.
+pythonic and minimal style of **schema** [#schema]_, at the expense of more
+advanced features.
 
-One of the shortcuts I took is bailing out on the first encountered validation
-error. The rationale (or rationalization, if you must) is that the library is
-meant to validate API inputs, rather than direct user input, so the burden is
-somewhat shifted to the client side to send valid requests. I do not suggest
-using val for validating web form input.
-
-Current status is: used in production code, but only in one place that I know of. ;)
+Current status is: used in production code, but only in one place that I know
+of.
 
 I have not optimized much, but for the kind of schemas I need (specifically: to
-validate JSON that has been loaded into python structures,) I have extremely
+validate JSON that has been loaded into python structures,) I have some
 anecdotal evidence that it's around 10x faster than both schema and flatland.
-(Again, that is mostly because it does way less, and I intend to keep it that
-way.)
+(Again, that is mostly because it does way less.)
 
 The schemas understood by val are very similar to the ones in schema::
 
@@ -53,7 +43,15 @@ The schemas understood by val are very similar to the ones in schema::
     >>> schema.validates(12)
     False
 
+
+Syntax
+~~~~~~
+
 Elements that can occur in a schema are: 
+
+
+Literals
+--------
 
 Simple literal values that will match equal values::
 
@@ -61,6 +59,10 @@ Simple literal values that will match equal values::
     True
     >>> Schema('foo').validates('foo')
     True
+
+
+Types
+-----
 
 Types that will validate anything that is an instance of the type::
 
@@ -80,9 +82,13 @@ Types that will validate anything that is an instance of the type::
     >>> Schema(object).validates([foo, (12, 43, 'strawberries'), {}])
     True
 
+
+Lists
+-----
+
 Lists of elements that will validate list values all of whose elements are
 validated by one of the elements in the elements in the list (order or
-number of elements do not matter, see Ordered)::
+number of elements do not matter, see `Ordered()`)::
 
     >>> Schema([str, int]).validates([12, 'foo', 'bar', 'baz', 42])
     True
@@ -93,6 +99,10 @@ number of elements do not matter, see Ordered)::
     True
     >>> schema.validates(['bar', 'bar', 13, 'bar'])
     True
+
+
+Dictionaries
+------------
 
 Dictionaries with elements as keys and values, that will validate
 dictionaries all of whose key value pairs are validated by at least one of
@@ -112,7 +122,11 @@ the key value pairs in the schema::
         ...
     NotValid: 12: 'bar' not matched
 
-Callables (that aren't of type `type`) will validate any value for which
+
+Callables
+---------
+
+Callables (that aren't of type ``type``) will validate any value for which
 the callable returns a truthy value. TypeErrors or ValueErrors in the call
 will result in a NotValid exception::
 
@@ -137,7 +151,11 @@ To get nicer Exceptions, use functions rather than lambdas::
         ...
     NotValid: 10 not validated by 'Must be less than 10.'
 
-`Convert(callable)`, will call the callable on the value being validated,
+
+Convert()
+---------
+
+``Convert(callable)``, will call the callable on the value being validated,
 and substitute the result of that call for the original value in the
 validated structure. TypeErrors or ValueErrors in the call will result in a
 NotValid exception. This (or supplying a default value to an Optional key)
@@ -157,7 +175,11 @@ representations to uuid objects, etc.)::
         ...
     NotValid: invalid literal for int() with base 10: 'foo'
 
-`Or(element1, element2, ...)` will validate a value validated by any of the
+
+Or()
+----
+
+``Or(element1, element2, ...)`` will validate a value validated by any of the
 elements passed into the Or::
 
     >>> schema = Or('foo', int)
@@ -170,7 +192,11 @@ elements passed into the Or::
         ...
     NotValid: 'bar' is not equal to 'foo', 'bar' is not of type <type 'int'>
 
-`And(element1, element2, ...)` will validate a value validated by all of
+
+And()
+-----
+
+``And(element1, element2, ...)`` will validate a value validated by all of
 the elements passed into the And::
 
     >>> from val import And
@@ -192,13 +218,17 @@ the elements passed into the And::
         ...
     NotValid: invalid literal for int() with base 10: 'foo'
 
-`{Optional(simple_literal_key): value}` will match any key value pair that
-matches `simple_literal_key: value` but the schema will still validate
+
+Optional()
+----------
+
+``{Optional(simple_literal_key): value}`` will match any key value pair that
+matches ``simple_literal_key: value`` but the schema will still validate
 dictionary values with no matching key.
 
-`Optional` can take an optional `default` parameter, whose value will be
+``Optional`` can take an optional ``default`` parameter, whose value will be
 substituted in the result if the key is not in the data, *or*, when
-a `null_values` parameter is also specified, if the key has a value that is
+a ``null_values`` parameter is also specified, if the key has a value that is
 one of the null values::
 
     >>> schema = Schema({
@@ -236,8 +266,12 @@ one of the null values::
     >>> schema.validate({'foo': None})
     {'foo': 13}
 
-`Ordered([element1, element2, element3])` will validate a list with
-*exactly* 3 elements, each of which must be validated by the corresponding
+
+Ordered()
+---------
+
+``Ordered([element1, element2, element3])`` will validate a list with
+**exactly** 3 elements, each of which must be validated by the corresponding
 element in the schema. If order and number of elements do not matter, just
 use a list::
 
@@ -254,6 +288,10 @@ use a list::
         ...
     NotValid: [12, u'fnord', 42, None, 12] does not have exactly 4 values. (Got 5.)
 
+
+Parsed schemas
+--------------
+
 Other parsed schema objects. So this works::
 
     >>> sub_schema = Schema({'foo': str, str: int})
@@ -261,8 +299,12 @@ Other parsed schema objects. So this works::
     ...     {'key1': sub_schema,
     ...      'key2': sub_schema,
     ...      str: sub_schema})
-    >>> schema.validates(
-    ...    {'key1': {'foo': 'bar'},
-    ...        'key2': {'foo': 'qux', 'baz': 43},
-    ...        'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}})
+    >>> schema.validates({
+    ...     'key1': {'foo': 'bar'},
+    ...     'key2': {'foo': 'qux', 'baz': 43},
+    ...     'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}})
     True
+
+
+.. [#schema] https://github.com/halst/schema
+.. [#flatland] http://discorporate.us/projects/flatland/
