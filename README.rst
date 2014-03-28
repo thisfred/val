@@ -3,11 +3,11 @@ val
 
 A validator for arbitrary Python objects.
 
-Inspired by some of the wonderful ideas in **schema** [1]_ and **flatland**
-[2]_ many of which I outright stole.
+Inspired by some of the wonderful ideas in **schema** [#schema]_ and
+**flatland** [#flatland]_ many of which I outright stole.
 
 The goal is to make validation faster than either, while keeping the very
-pythonic and minimal style of **schema** [1]_ , at the expense of more
+pythonic and minimal style of **schema** [#schema]_ , at the expense of more
 advanced features.
 
 Current status is: used in production code, but only in one place that I know
@@ -19,7 +19,7 @@ anecdotal evidence that it's around 10x faster than both schema and flatland.
 (Again, that is mostly because it does way less.)
 
 The schemas understood by val are very similar to the ones in **schema**
-[1]_ , but not 100% compatible::
+[#schema]_ , but not 100% compatible::
 
     >>> from val import Schema, Or, Optional
     >>> schema = Schema({
@@ -307,5 +307,5 @@ Other parsed schema objects. So this works::
     True
 
 
-.. [1] https://github.com/halst/schema
-.. [2] http://discorporate.us/projects/flatland/
+.. [#schema] https://github.com/halst/schema
+.. [#flatland] http://discorporate.us/projects/flatland/
