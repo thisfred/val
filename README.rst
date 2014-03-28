@@ -307,5 +307,5 @@ Other parsed schema objects. So this works::
     True
 
 
-.. [#schema] https://github.com/halst/schema
-.. [#flatland] http://discorporate.us/projects/flatland/
+.. [schema] https://github.com/halst/schema
+.. [flatland] http://discorporate.us/projects/flatland/
