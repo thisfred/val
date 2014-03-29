@@ -56,7 +56,7 @@ Elements that can occur in a schema are:
 Literals
 --------
 
-Simple literal values that will match equal values:
+Simple literal values will match equal values:
 
 .. code:: python
 
@@ -69,7 +69,7 @@ Simple literal values that will match equal values:
 Types
 -----
 
-Types that will validate anything that is an instance of the type:
+Types will validate anything that is an instance of the type:
 
 .. code:: python
 
@@ -113,9 +113,9 @@ number of elements do not matter, see `Ordered()`_):
 Dictionaries
 ------------
 
-Dictionaries with elements as keys and values, that will validate
-dictionaries all of whose key value pairs are validated by at least one of
-the key value pairs in the schema:
+Dictionaries will validate dictionaries all of whose key value
+pairs are validated by at least one of the key value pairs in 
+the schema:
 
 .. code:: python
 
@@ -170,7 +170,7 @@ To get nicer Exceptions, use functions rather than lambdas:
 Convert()
 ---------
 
-``Convert(callable)``, will call the callable on the value being validated,
+``Convert(callable)`` will call the callable on the value being validated,
 and substitute the result of that call for the original value in the
 validated structure. TypeErrors or ValueErrors in the call will result in a
 NotValid exception. This (or supplying a default value to an Optional key)
