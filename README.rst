@@ -14,9 +14,9 @@ Current status is: used in production code, but only in one place that I know
 of.
 
 I have not optimized much, but for the kind of schemas I need (specifically: to
-validate JSON that has been loaded into python structures,) but I have some
-anecdotal evidence that it's around ten times faster than both schema and
-flatland. (Again, that is mostly because it does way less.)
+validate JSON that has been loaded into python structures as part of a REST API,)
+I have some anecdotal evidence that it's around ten times faster than both schema
+and flatland. (Again, that is mostly because it does way less.)
 
 The schemas understood by val are very similar to the ones in schema_ , but not
 100% compatible:
