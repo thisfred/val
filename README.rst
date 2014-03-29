@@ -93,8 +93,8 @@ Types that will validate anything that is an instance of the type:
 Lists
 -----
 
-Lists of elements that will validate list values all of whose elements are
-validated by one of the elements in the elements in the list (order or
+Lists will validate list values all of whose elements are
+validated by at least one of the elements in the schema (order or
 number of elements do not matter, see `Ordered()`_):
 
 .. code:: python
