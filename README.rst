@@ -19,7 +19,9 @@ anecdotal evidence that it's around ten times faster than both schema and
 flatland. (Again, that is mostly because it does way less.)
 
 The schemas understood by val are very similar to the ones in schema_ , but not
-100% compatible::
+100% compatible:
+
+.. code:: python
 
     >>> from val import Schema, Or, Optional
     >>> schema = Schema({
@@ -54,7 +56,9 @@ Elements that can occur in a schema are:
 Literals
 --------
 
-Simple literal values that will match equal values::
+Simple literal values that will match equal values:
+
+.. code:: python
 
     >>> Schema(12).validates(12)
     True
@@ -65,7 +69,9 @@ Simple literal values that will match equal values::
 Types
 -----
 
-Types that will validate anything that is an instance of the type::
+Types that will validate anything that is an instance of the type:
+
+.. code:: python
 
     >>> Schema(int).validates(12)
     True
@@ -89,7 +95,9 @@ Lists
 
 Lists of elements that will validate list values all of whose elements are
 validated by one of the elements in the elements in the list (order or
-number of elements do not matter, see `Ordered()`_)::
+number of elements do not matter, see `Ordered()`_):
+
+.. code:: python
 
     >>> Schema([str, int]).validates([12, 'foo', 'bar', 'baz', 42])
     True
@@ -107,7 +115,9 @@ Dictionaries
 
 Dictionaries with elements as keys and values, that will validate
 dictionaries all of whose key value pairs are validated by at least one of
-the key value pairs in the schema::
+the key value pairs in the schema:
+
+.. code:: python
 
     >>> schema = Schema({'foo': int, str: int})
     >>> schema.validates({'foo': 83})
@@ -129,7 +139,9 @@ Callables
 
 Callables (that aren't of type ``type``) will validate any value for which
 the callable returns a truthy value. TypeErrors or ValueErrors in the call
-will result in a NotValid exception::
+will result in a NotValid exception:
+
+.. code:: python
 
     >>> schema = Schema(lambda x: x < 10)
     >>> schema.validates(9)
@@ -139,7 +151,9 @@ will result in a NotValid exception::
         ...
     NotValid: 10 not validated by '<lambda>'
 
-To get nicer Exceptions, use functions rather than lambdas::
+To get nicer Exceptions, use functions rather than lambdas:
+
+.. code:: python
 
     >>> def less_than_ten(n):
     ...     """Must be less than 10."""
@@ -163,7 +177,9 @@ NotValid exception. This (or supplying a default value to an Optional key)
 is the only ways to modify the data being validated during the validation.
 Convert is useful to convert between representations (for
 instance from timestamps to datetime objects, or uuid string
-representations to uuid objects, etc.)::
+representations to uuid objects, etc.):
+
+.. code:: python
 
     >>> from val import Convert
     >>> schema = Schema(Convert(int))
@@ -181,7 +197,9 @@ Or()
 ----
 
 ``Or(element1, element2, ...)`` will validate a value validated by any of the
-elements passed into the Or::
+elements passed into the Or:
+
+.. code:: python
 
     >>> schema = Or('foo', int)
     >>> schema.validates('foo')
@@ -198,7 +216,9 @@ And()
 -----
 
 ``And(element1, element2, ...)`` will validate a value validated by all of
-the elements passed into the And::
+the elements passed into the And:
+
+.. code:: python
 
     >>> from val import And
     >>> schema = And(Convert(int), lambda x: x < 12, lambda x: x >= 3)
@@ -230,7 +250,9 @@ dictionary values with no matching key.
 ``Optional`` can take an optional ``default`` parameter, whose value will be
 substituted in the result if the key is not in the data, *or*, when
 a ``null_values`` parameter is also specified, if the key has a value that is
-one of the null values::
+one of the null values:
+
+.. code:: python
 
     >>> schema = Schema({
     ...     Optional('foo'): 12})
@@ -274,7 +296,9 @@ Ordered()
 ``Ordered([element1, element2, element3])`` will validate a list with
 **exactly** 3 elements, each of which must be validated by the corresponding
 element in the schema. If order and number of elements do not matter, just
-use a list::
+use a list:
+
+.. code:: python
 
     >>> from val import Ordered
     >>> schema = Ordered([int, basestring, int, None])
@@ -293,7 +317,9 @@ use a list::
 Parsed schemas
 --------------
 
-Other parsed schema objects. So this works::
+Other parsed schema objects. So this works:
+
+.. code:: python
 
     >>> sub_schema = Schema({'foo': str, str: int})
     >>> schema = Schema(
