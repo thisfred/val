@@ -5,7 +5,7 @@ Copyright (c) 2013-2014
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.4.1'
+__version__ = '0.5.0'
 
 NOT_SUPPLIED = object()
 
