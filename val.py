@@ -11,6 +11,7 @@ NOT_SUPPLIED = object()
 
 
 class NotValid(Exception):
+
     """Object not valid for schema."""
 
     pass
@@ -19,8 +20,8 @@ class NotValid(Exception):
 def get_repr(thing):
     """Get sensible string representation for validator."""
     return (
-        getattr(thing, 'func_doc') or
-        getattr(thing, 'func_name') or
+        getattr(thing, '__doc__') or
+        getattr(thing, '__name__') or
         repr(thing))
 
 
@@ -59,7 +60,7 @@ def build_callable_validator(function):
             if function(data):
                 return data
 
-        except (TypeError, ValueError, NotValid), e:
+        except (TypeError, ValueError, NotValid) as e:
             raise NotValid(', '.join(e.args))
 
         raise NotValid("%r not validated by '%s'" % (data, get_repr(function)))
@@ -104,7 +105,7 @@ def _determine_keys(dictionary):
             optional[key.value] = parse_schema(value)
             if key.default is not NOT_SUPPLIED:
                 defaults[key.value] = (key.default, key.null_values)
-            continue
+            continue  # pragma: nocover
 
         if type(key) is type:
             types[key] = parse_schema(value)
@@ -121,7 +122,7 @@ def _validate_mandatory_keys(mandatory, validated, data, to_validate):
             raise NotValid('missing key: %r' % (key,))
         try:
             validated[key] = sub_schema(data[key])
-        except NotValid, e:
+        except NotValid as e:
             raise NotValid('%r: %s' % (key, ', '.join(e.args)))
         to_validate.remove(key)
 
@@ -130,7 +131,7 @@ def _validate_optional_key(key, missing, value, defaults, validated, optional):
     """Validate an optional key."""
     try:
         validated[key] = optional[key](value)
-    except NotValid, e:
+    except NotValid as e:
         raise NotValid('%r: %s' % (key, ', '.join(e.args)))
     if key in missing:
         _, null_values = defaults[key]
@@ -173,12 +174,12 @@ def build_dict_validator(dictionary):
 
     def dict_validator(data):
         """Validate dictionaries."""
-        missing = defaults.keys()
+        missing = list(defaults.keys())
         if not isinstance(data, dict):
             raise NotValid('%r is not of type dict' % (data,))
 
         validated = {}
-        to_validate = data.keys()
+        to_validate = list(data.keys())
         _validate_mandatory_keys(mandatory, validated, data, to_validate)
         _validate_other_keys(
             optional, types, missing, defaults, validated, data, to_validate)
@@ -212,6 +213,7 @@ def parse_schema(schema):
 
 
 class BaseSchema(object):
+
     """Base class for all Schema objects."""
 
     def validates(self, data):
@@ -224,6 +226,7 @@ class BaseSchema(object):
 
 
 class Schema(BaseSchema):
+
     """A val schema."""
 
     def __init__(self, schema, additional_validators=None):
@@ -246,6 +249,7 @@ class Schema(BaseSchema):
 
 
 class Optional(object):
+
     """Optional key in a dictionary."""
 
     def __init__(self, value, default=NOT_SUPPLIED, null_values=NOT_SUPPLIED):
@@ -258,6 +262,7 @@ class Optional(object):
 
 
 class Or(BaseSchema):
+
     """Validates if any of the subschemas do."""
 
     def __init__(self, *values):
@@ -270,7 +275,7 @@ class Or(BaseSchema):
         for sub in self.schemas:
             try:
                 return sub(data)
-            except NotValid, e:
+            except NotValid as e:
                 errors.extend(e.args)
         raise NotValid(', '.join(errors))
 
@@ -279,6 +284,7 @@ class Or(BaseSchema):
 
 
 class And(BaseSchema):
+
     """Validates if all of the subschemas do."""
 
     def __init__(self, *values):
@@ -296,6 +302,7 @@ class And(BaseSchema):
 
 
 class Convert(BaseSchema):
+
     """Convert a value."""
 
     def __init__(self, conversion):
@@ -305,7 +312,7 @@ class Convert(BaseSchema):
         """Convert data or die trying."""
         try:
             return self.convert(data)
-        except (TypeError, ValueError), e:
+        except (TypeError, ValueError) as e:
             raise NotValid(', '.join(e.args))
 
     def __repr__(self):
@@ -313,6 +320,7 @@ class Convert(BaseSchema):
 
 
 class Ordered(BaseSchema):
+
     """Validate an ordered iterable."""
 
     def __init__(self, schemas):

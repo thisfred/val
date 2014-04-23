@@ -27,21 +27,21 @@ The schemas understood by val are very similar to the ones in schema_ , but not
     >>> schema = Schema({
     ...    'invisible': bool,
     ...    'immutable': bool,
-    ...    Optional('favorite_colors'): [basestring],
-    ...    Optional('favorite_foods'): [basestring],
+    ...    Optional('favorite_colors'): [str],
+    ...    Optional('favorite_foods'): [str],
     ...    'lucky_number': Or(int, None),
     ...    'shoe_size': int,
     ...    'mother': {
-    ...        'name': basestring,
-    ...        'nested': {'id': basestring}},
+    ...        'name': str,
+    ...        'nested': {'id': str}},
     ...    Optional('father'): {
-    ...        'name': basestring,
-    ...        'nested': {'id': basestring}}})
+    ...        'name': str,
+    ...        'nested': {'id': str}}})
 
     >>> schema.validate(12)
     Traceback (most recent call last): 
         ...
-    NotValid: 12 is not of type dict
+    val.NotValid: 12 is not of type dict
 
     >>> schema.validates(12)
     False
@@ -75,9 +75,9 @@ Types will validate anything that is an instance of the type:
 
     >>> Schema(int).validates(12)
     True
-    >>> Schema(basestring).validates('foo')
+    >>> Schema(str).validates('foo')
     True
-    >>> Schema(basestring).validates(u'fnørd')
+    >>> Schema(str).validates('fnørd')
     True
     >>> Schema(list).validates([12, 'foo'])
     True
@@ -127,11 +127,11 @@ the schema:
     >>> schema.validate({'foo': 'bar'}) 
     Traceback (most recent call last): 
         ...
-    NotValid: 'foo': 'bar' is not of type <type 'int'>
+    val.NotValid: 'foo': 'bar' is not of type <class 'int'>
     >>> schema.validate({'foo': 21, 12: 'bar'})
     Traceback (most recent call last): 
         ...
-    NotValid: 12: 'bar' not matched
+    val.NotValid: 12: 'bar' not matched
 
 
 Callables
@@ -149,7 +149,7 @@ will result in a NotValid exception:
     >>> schema.validate(10)
     Traceback (most recent call last): 
         ...
-    NotValid: 10 not validated by '<lambda>'
+    val.NotValid: 10 not validated by '<lambda>'
 
 To get nicer Exceptions, use functions rather than lambdas:
 
@@ -164,7 +164,7 @@ To get nicer Exceptions, use functions rather than lambdas:
     >>> schema.validate(10)
     Traceback (most recent call last): 
         ...
-    NotValid: 10 not validated by 'Must be less than 10.'
+    val.NotValid: 10 not validated by 'Must be less than 10.'
 
 
 Convert()
@@ -190,7 +190,7 @@ representations to uuid objects, etc.):
     >>> schema.validate('foo')
     Traceback (most recent call last): 
         ...
-    NotValid: invalid literal for int() with base 10: 'foo'
+    val.NotValid: invalid literal for int() with base 10: 'foo'
 
 
 Or()
@@ -209,7 +209,7 @@ elements passed into the Or:
     >>> schema.validate('bar')
     Traceback (most recent call last): 
         ...
-    NotValid: 'bar' is not equal to 'foo', 'bar' is not of type <type 'int'>
+    val.NotValid: 'bar' is not equal to 'foo', 'bar' is not of type <class 'int'>
 
 
 And()
@@ -229,15 +229,15 @@ the elements passed into the And:
     >>> schema.validate('12')
     Traceback (most recent call last): 
         ...
-    NotValid: 12 not validated by '<lambda>'
+    val.NotValid: 12 not validated by '<lambda>'
     >>> schema.validate(42.77)
     Traceback (most recent call last): 
         ...
-    NotValid: 42 not validated by '<lambda>'
+    val.NotValid: 42 not validated by '<lambda>'
     >>> schema.validate('foo')
     Traceback (most recent call last): 
         ...
-    NotValid: invalid literal for int() with base 10: 'foo'
+    val.NotValid: invalid literal for int() with base 10: 'foo'
 
 
 Optional()
@@ -263,11 +263,11 @@ one of the null values:
     >>> schema.validate({'foo': 13})
     Traceback (most recent call last): 
         ...
-    NotValid: 'foo': 13 is not equal to 12
+    val.NotValid: 'foo': 13 is not equal to 12
     >>> schema.validate({'foo': 'bar'})
     Traceback (most recent call last): 
         ...
-    NotValid: 'foo': 'bar' is not equal to 12
+    val.NotValid: 'foo': 'bar' is not equal to 12
 
     >>> schema = Schema({
     ...    Optional('foo', default=13): int})
@@ -278,7 +278,7 @@ one of the null values:
     >>> schema.validate({'foo': 'bar'})
     Traceback (most recent call last): 
         ...
-    NotValid: 'foo': 'bar' is not of type <type 'int'>
+    val.NotValid: 'foo': 'bar' is not of type <class 'int'>
 
     >>> schema = Schema({
     ...     Optional('foo', default=13, null_values=(0, None)): Or(int, None)})
@@ -301,17 +301,17 @@ use a list:
 .. code:: python
 
     >>> from val import Ordered
-    >>> schema = Ordered([int, basestring, int, None])
-    >>> schema.validates([12, u'fnord', 42, None])
+    >>> schema = Ordered([int, str, int, None])
+    >>> schema.validates([12, 'fnord', 42, None])
     True
-    >>> schema.validate([u'fnord', 42, None, 12])
+    >>> schema.validate(['fnord', 42, None, 12])
     Traceback (most recent call last): 
         ...
-    NotValid: u'fnord' is not of type <type 'int'>
-    >>> schema.validate([12, u'fnord', 42, None, 12])
+    val.NotValid: 'fnord' is not of type <class 'int'>
+    >>> schema.validate([12, 'fnord', 42, None, 12])
     Traceback (most recent call last): 
         ...
-    NotValid: [12, u'fnord', 42, None, 12] does not have exactly 4 values. (Got 5.)
+    val.NotValid: [12, 'fnord', 42, None, 12] does not have exactly 4 values. (Got 5.)
 
 
 Parsed schemas
