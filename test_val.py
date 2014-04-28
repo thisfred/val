@@ -24,7 +24,7 @@ def test_non_identity():
 
 def test_type_check():
     schema = Schema(str)
-    assert schema.validate('test'), 'test'
+    assert schema.validate('test') == 'test'
 
 
 def test_failing_type_check():
