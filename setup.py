@@ -39,5 +39,5 @@ setup(
     url='http://github.com/thisfred/val',
     py_modules=['val'],
     long_description=open('README.rst').read(),
-    tests_require=['nose', 'nose-cov', 'flake8', 'pylint'],
+    tests_require=['pytest', 'flake8', 'pylint'],
     test_suite='test_val')
