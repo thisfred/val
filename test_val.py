@@ -10,45 +10,6 @@ import doctest
 from val import NotValid, Optional, Or, And, Schema, Convert, Ordered
 import pytest
 
-VAL_SCHEMA = {
-    Optional('invisible'): bool,
-    Optional('immutable'): bool,
-    Optional('favorite_colors'): [str],
-    Optional('favorite_foods'): [str],
-    Optional('lucky_number'): int,
-    Optional('shoe_size'): int,
-    Optional('mother'): {
-        Optional('name'): str,
-        'nested': {'id': str}},
-    Optional('father'): {
-        Optional('name'): str,
-        'nested': {'id': str}}}
-
-VALID_TEST_DATA = {
-    'invisible': False,
-    'immutable': False,
-    'favorite_colors': ['mauve', 'taupe', 'beige'],
-    'favorite_foods': ['granola', 'shinola'],
-    'lucky_number': 1,
-    'shoe_size': 12,
-    'mother': {
-        'name': 'edna',
-        'nested': {'id': '1232134'}},
-    'father': {
-        'nested': {'id': '9492921'}}}
-
-INVALID_TEST_DATA = {
-    'invisible': False,
-    'immutable': 0,
-    'favorite_colors': ['test', 'test2', None, 1233, 1.34, False],
-    'favorite_foods': ['kraft cheese'],
-    'lucky_number': 1,
-    'shoe_size': 12,
-    'mother': 'edna',
-    'father': {
-        'name': 'ed',
-        'nested': {'id': '9492921'}}}
-
 
 def test_identity():
     schema = Schema('test')
