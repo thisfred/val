@@ -375,6 +375,8 @@ not work:
 
 But this will:
 
+.. code:: python
+
     >>> schema = Or(str, None, default='default value')
     >>> schema.validate(None)
     'default value'
@@ -387,8 +389,8 @@ Default values will also work for dictionary keys that are specified as
     >>> schema = Schema(
     ...     {'foo': str,
     ...      Optional('bar'): Or(int, None, default=23)})
-    >>> schema.validate({'foo': 'yes'})
-    {'bar': 23, 'foo': 'yes'}
+    >>> schema.validate({'foo': 'yes'}) == {'bar': 23, 'foo': 'yes'}
+    True
 
 .. _schema: https://github.com/halst/schema
 .. _flatland: http://discorporate.us/projects/flatland/
