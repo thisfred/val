@@ -1,7 +1,7 @@
 val
 ===
 
-A validator for arbitrary Python objects.
+A validator for arbitrary Python objects. Works with Python 2 and 3.
 
 Inspired by some of the wonderful ideas in schema_ and flatland_, many of which
 I outright stole.
