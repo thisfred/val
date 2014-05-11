@@ -5,7 +5,10 @@ Copyright (c) 2013-2014
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.5.1'
+from warnings import warn
+
+
+__version__ = '0.5.2'
 
 NOT_SUPPLIED = object()
 
@@ -103,7 +106,13 @@ def _determine_keys(dictionary):
     for key, value in dictionary.items():
         if isinstance(key, Optional):
             optional[key.value] = parse_schema(value)
-            if key.default is not NOT_SUPPLIED:
+            if isinstance(value, BaseSchema)\
+                    and value.default is not NOT_SUPPLIED:
+                defaults[key.value] = (value.default, value.null_values)
+            elif key.default is not NOT_SUPPLIED:
+                warn(
+                    "Defaults should be specified on the value rather than in"
+                    "Optional", DeprecationWarning, stacklevel=2)
                 defaults[key.value] = (key.default, key.null_values)
             continue  # pragma: nocover
 
@@ -216,6 +225,12 @@ class BaseSchema(object):
 
     """Base class for all Schema objects."""
 
+    def __init__(self, additional_validators=None, default=NOT_SUPPLIED,
+                 null_values=NOT_SUPPLIED):
+        self.additional_validators = additional_validators or []
+        self.default = default
+        self.null_values = null_values
+
     def validates(self, data):
         """Return True if schema validates data, False otherwise."""
         try:
@@ -224,38 +239,44 @@ class BaseSchema(object):
         except NotValid:
             return False
 
-
-class Schema(BaseSchema):
-
-    """A val schema."""
-
-    def __init__(self, schema, additional_validators=None):
-        self._orig_schema = schema
-        self.schema = parse_schema(schema)
-        self.additional_validators = additional_validators or []
-
-    def __repr__(self):
-        return repr(self._orig_schema)
-
     def validate(self, data):
-        """Return validated data, or raise NotValid."""
-        validated = self.schema(data)
+        validated = self._validated(data)
         for validator in self.additional_validators:
             if not validator(validated):
                 raise NotValid(
                     "%s not validated by additional validator '%s'" % (
                         validated, get_repr(validator)))
+
+        if not (self.default is NOT_SUPPLIED or validated):
+            return self.default
+
         return validated
+
+
+class Schema(BaseSchema):
+
+    """A val schema."""
+
+    def __init__(self, schema, **kwargs):
+        super(Schema, self).__init__(**kwargs)
+        self._orig_schema = schema
+        self.schema = parse_schema(schema)
+
+    def __repr__(self):
+        return repr(self._orig_schema)
+
+    def _validated(self, data):
+        return self.schema(data)
 
 
 class Optional(object):
 
     """Optional key in a dictionary."""
 
-    def __init__(self, value, default=NOT_SUPPLIED, null_values=NOT_SUPPLIED):
+    def __init__(self, value, null_values=NOT_SUPPLIED, default=NOT_SUPPLIED):
         self.value = value
-        self.default = default
         self.null_values = null_values
+        self.default = default
 
     def __repr__(self):
         return "<Optional: %r>" % (self.value,)
@@ -265,11 +286,12 @@ class Or(BaseSchema):
 
     """Validates if any of the subschemas do."""
 
-    def __init__(self, *values):
+    def __init__(self, *values, **kwargs):
+        super(Or, self).__init__(**kwargs)
         self.values = values
         self.schemas = tuple(parse_schema(s) for s in values)
 
-    def validate(self, data):
+    def _validated(self, data):
         """Validate data if any subschema validates it."""
         errors = []
         for sub in self.schemas:
@@ -277,6 +299,7 @@ class Or(BaseSchema):
                 return sub(data)
             except NotValid as e:
                 errors.extend(e.args)
+
         raise NotValid(', '.join(errors))
 
     def __repr__(self):
@@ -287,11 +310,12 @@ class And(BaseSchema):
 
     """Validates if all of the subschemas do."""
 
-    def __init__(self, *values):
+    def __init__(self, *values, **kwargs):
+        super(And, self).__init__(**kwargs)
         self.values = values
         self.schemas = tuple(parse_schema(s) for s in values)
 
-    def validate(self, data):
+    def _validated(self, data):
         """Validate data if all subschemas validate it."""
         for sub in self.schemas:
             data = sub(data)
@@ -305,10 +329,11 @@ class Convert(BaseSchema):
 
     """Convert a value."""
 
-    def __init__(self, conversion):
-        self.convert = conversion
+    def __init__(self, converter, **kwargs):
+        super(Convert, self).__init__(kwargs)
+        self.convert = converter
 
-    def validate(self, data):
+    def _validated(self, data):
         """Convert data or die trying."""
         try:
             return self.convert(data)
@@ -323,12 +348,13 @@ class Ordered(BaseSchema):
 
     """Validate an ordered iterable."""
 
-    def __init__(self, schemas):
+    def __init__(self, schemas, **kwargs):
+        super(Ordered, self).__init__(**kwargs)
         self._orig_schema = schemas
         self.schemas = type(schemas)(Schema(s) for s in schemas)
         self.length = len(self.schemas)
 
-    def validate(self, values):
+    def _validated(self, values):
         """Validate if the values are validated one by one in order."""
         if self.length != len(values):
             raise NotValid(

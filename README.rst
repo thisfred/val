@@ -185,8 +185,8 @@ Convert()
 ``Convert(callable)`` will call the callable on the value being validated,
 and substitute the result of that call for the original value in the
 validated structure. TypeErrors or ValueErrors in the call will result in a
-NotValid exception. This (or supplying a default value to an Optional key)
-is the only ways to modify the data being validated during the validation.
+NotValid exception. This or supplying a default value are the only ways to
+modify the data being validated during the validation.
 Convert is useful to convert between representations (for
 instance from timestamps to datetime objects, or uuid string
 representations to uuid objects, etc.):
@@ -276,10 +276,6 @@ Optional()
 matches ``simple_literal_key: value`` but the schema will still validate
 dictionary values with no matching key.
 
-``Optional`` can take an optional ``default`` parameter, whose value will be
-substituted in the result if the key is not in the data, *or*, when
-a ``null_values`` parameter is also specified, if the key has a value that is
-one of the null values:
 
 .. code:: python
 
@@ -304,29 +300,6 @@ one of the null values:
     # Traceback (most recent call last): 
     #     ...
     # NotValid: 'foo': 'bar' is not equal to 12
-
-    >>> schema = Schema({
-    ...    Optional('foo', default=13): int})
-    >>> schema.validate({'foo': 12})
-    {'foo': 12}
-    >>> schema.validate({})
-    {'foo': 13}
-    >>> schema.validates({'foo': 'bar'})
-    False
-
-    # >>> schema.validate({'foo': 'bar'})
-    # Traceback (most recent call last): 
-    #     ...
-    # NotValid: 'foo': 'bar' is not of type <... 'int'>
-
-    >>> schema = Schema({
-    ...     Optional('foo', default=13, null_values=(0, None)): Or(int, None)})
-    >>> schema.validate({'foo': 12})
-    {'foo': 12}
-    >>> schema.validate({'foo': 0})
-    {'foo': 13}
-    >>> schema.validate({'foo': None})
-    {'foo': 13}
 
 
 Ordered()
@@ -359,7 +332,7 @@ use a list:
     # NotValid: [12, 'fnord', 42, None, 12] does not have exactly 4 values. (Got 5.)
 
 
-Parsed schemas
+Parsed Schemas
 --------------
 
 Other parsed schema objects. So this works:
@@ -377,6 +350,45 @@ Other parsed schema objects. So this works:
     ...     'whatever': {'foo': 'doo', 'fsck': 22, 'tsk': 2992}})
     True
 
+
+Default Values
+--------------
+
+One can supply a default value to any (subclass of) Schema, which will be used
+in place of the validated value if that evaluates to `False`.
+
+.. code:: python
+
+    >>> schema = Schema(str, default='default value')
+    >>> schema.validate('supplied value')
+    'supplied value'
+    >>> schema.validate('')
+    'default value'
+
+Note that the original value must still be valid for the schema, so this will
+not work:
+
+.. code:: python
+
+    >>> schema.validates(None)
+    False
+
+But this will:
+
+    >>> schema = Or(str, None, default='default value')
+    >>> schema.validate(None)
+    'default value'
+
+Default values will also work for dictionary keys that are specified as
+`Optional`:
+
+.. code:: python
+
+    >>> schema = Schema(
+    ...     {'foo': str,
+    ...      Optional('bar'): Or(int, None, default=23)})
+    >>> schema.validate({'foo': 'yes'})
+    {'bar': 23, 'foo': 'yes'}
 
 .. _schema: https://github.com/halst/schema
 .. _flatland: http://discorporate.us/projects/flatland/

@@ -67,6 +67,14 @@ def test_dictionary_optional_missing():
         {'key': 'val'}) == {'key': 'val', 'key2': 'val2'}
 
 
+def test_dictionary_optional_with_default_on_value():
+    schema = Schema({
+        'key': str,
+        Optional('key2'): Schema(str, default='val2')})
+    assert schema.validate(
+        {'key': 'val'}) == {'key': 'val', 'key2': 'val2'}
+
+
 def test_regression_validating_twice_works():
     schema = Schema({
         'key': str,
@@ -79,7 +87,7 @@ def test_regression_validating_twice_works():
         {'key': 'new_val'}) == {'key': 'new_val', 'key2': 'val2'}
 
 
-def test_dictionary_optional_null_value():
+def test_dictionary_optional_with_null_value():
     schema = Schema({
         'key': str,
         Optional('key2', default='val2', null_values=(None,)): Or(
@@ -89,12 +97,32 @@ def test_dictionary_optional_null_value():
         {'key': 'val', 'key2': 'val2'})
 
 
+def test_dictionary_optional_with_null_value_on_value_schema():
+    schema = Schema({
+        'key': str,
+        Optional('key2'): Or(
+            str, None, default='val2', null_values=(None,))})
+    assert (
+        schema.validate({'key': 'val', 'key2': None}) ==
+        {'key': 'val', 'key2': 'val2'})
+
+
 def test_dictionary_optional_not_missing():
-    schema = Schema({'key': str, Optional(
+    schema = Schema({
+        'key': str, Optional(
         'key2', default='val2'): Or(str, None)})
     assert schema.validate({
         'key': 'val',
         'key2': None}) == {'key': 'val', 'key2': None}
+
+
+def test_dictionary_optional_with_default_on_value_not_missing():
+    schema = Schema({
+        'key': str,
+        Optional('key2'): Or(str, None, default='val2')})
+    assert schema.validate({
+        'key': 'val',
+        'key2': None}) == {'key': 'val', 'key2': 'val2'}
 
 
 def test_dictionary_wrong_key():
@@ -410,3 +438,9 @@ def test_schema_with_additional_validators():
         schema.validate({'foo': 5, 'bar': 7})
     assert ctx.value.args[0].endswith(
         "not validated by additional validator 'foo + bar > 12.'")
+
+
+def test_uses_default_value_to_replace_falsy_values():
+    schema = Schema(
+        {object: object}, default={'foo': 'bar'})
+    assert schema.validate({}) == {'foo': 'bar'}
