@@ -38,6 +38,4 @@ setup(
     keywords='validation validators',
     url='http://github.com/thisfred/val',
     py_modules=['val'],
-    long_description=open('README.rst').read(),
-    tests_require=['pytest', 'flake8', 'pylint'],
-    test_suite='test_val')
+    long_description=open('README.rst').read())

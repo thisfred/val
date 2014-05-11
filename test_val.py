@@ -9,6 +9,12 @@ Vladimir Keleshev, <vladimir@keleshev.com>
 import doctest
 from val import NotValid, Optional, Or, And, Schema, Convert, Ordered
 import pytest
+import sys
+
+if sys.version_info[0] == 3:
+    TYPE_OR_CLASS = 'class'
+else:
+    TYPE_OR_CLASS = 'type'
 
 
 def test_identity():
@@ -51,8 +57,8 @@ def test_dictionary_optional():
 
 def test_dictionary_optional_repr():
     schema = Schema({'key': str, Optional('key2'): str})
-    assert "<Optional: 'key2'>: <class 'str'>" in str(schema)
-    assert "'key': <class 'str'>" in str(schema)
+    assert "<Optional: 'key2'>: <%s 'str'>" % TYPE_OR_CLASS in str(schema)
+    assert "'key': <%s 'str'>" % TYPE_OR_CLASS in str(schema)
 
 
 def test_dictionary_optional_missing():
@@ -145,7 +151,7 @@ def test_or():
 def test_or_repr():
     schema = Or(1, str, Convert(int))
     assert str(schema).startswith(
-        "<1 or <class 'str'> or <Convert: <class ")
+        "<1 or <%s 'str'> or <Convert: <%s " % (TYPE_OR_CLASS, TYPE_OR_CLASS))
 
 
 def test_and():
@@ -162,7 +168,7 @@ def test_and():
 def test_and_repr():
     schema = And(str, Convert(int))
     assert str(schema).startswith(
-        "<<class 'str'> and <Convert: <class ")
+        "<<%s 'str'> and <Convert: <%s " % (TYPE_OR_CLASS, TYPE_OR_CLASS))
 
 
 def test_dont_care_values_in_dict():
@@ -227,7 +233,8 @@ def test_ordered():
 
 def test_ordered_repr():
     schema = Ordered([str, int])
-    assert str(schema) == "<Ordered: [<class 'str'>, <class 'int'>]>"
+    assert str(schema) == "<Ordered: [<%s 'str'>, <%s 'int'>]>" % (
+        TYPE_OR_CLASS, TYPE_OR_CLASS)
 
 
 def test_callable_exception():
@@ -403,8 +410,3 @@ def test_schema_with_additional_validators():
         schema.validate({'foo': 5, 'bar': 7})
     assert ctx.value.args[0].endswith(
         "not validated by additional validator 'foo + bar > 12.'")
-
-
-def test_documentation():
-    result = doctest.testfile("README.rst")
-    assert result.failed == 0
