@@ -89,8 +89,7 @@ def test_dictionary_optional_with_default_on_value():
 def test_regression_validating_twice_works():
     schema = Schema({
         'key': str,
-        Optional('key2', default='val2', null_values=(None,)): Or(
-            str, None)})
+        Optional('key2', default='val2', null_values=(None,)): Or(str, None)})
     assert (
         schema.validate({'key': 'val', 'key2': 'other_val'}) ==
         {'key': 'val', 'key2': 'other_val'})
@@ -101,8 +100,7 @@ def test_regression_validating_twice_works():
 def test_dictionary_optional_with_null_value():
     schema = Schema({
         'key': str,
-        Optional('key2', default='val2', null_values=(None,)): Or(
-            str, None)})
+        Optional('key2', default='val2', null_values=(None,)): Or(str, None)})
     assert (
         schema.validate({'key': 'val', 'key2': None}) ==
         {'key': 'val', 'key2': 'val2'})
@@ -111,8 +109,7 @@ def test_dictionary_optional_with_null_value():
 def test_dictionary_optional_with_null_value_on_value_schema():
     schema = Schema({
         'key': str,
-        Optional('key2'): Or(
-            str, None, default='val2', null_values=(None,))})
+        Optional('key2'): Or(str, None, default='val2', null_values=(None,))})
     assert (
         schema.validate({'key': 'val', 'key2': None}) ==
         {'key': 'val', 'key2': 'val2'})
@@ -120,8 +117,8 @@ def test_dictionary_optional_with_null_value_on_value_schema():
 
 def test_dictionary_optional_not_missing():
     schema = Schema({
-        'key': str, Optional(
-        'key2', default='val2'): Or(str, None)})
+        'key': str,
+        Optional('key2', default='val2'): Or(str, None)})
     assert schema.validate({
         'key': 'val',
         'key2': None}) == {'key': 'val', 'key2': None}

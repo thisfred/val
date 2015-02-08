@@ -6,4 +6,4 @@ pytest:
 tox:
 	tox
 lint:
-	flake8 --max-complexity=10 *.py
+	flake8 --max-complexity=10 val tests

@@ -8,7 +8,7 @@ Eric Casteleijn, <thisfred@gmail.com>
 from warnings import warn
 
 
-__version__ = '0.5.3'
+__version__ = '0.5.4'
 NOT_SUPPLIED = object()
 
 
