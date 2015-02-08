@@ -1,6 +1,13 @@
 val
 ===
 
+.. image:: https://travis-ci.org/thisfred/val.svg?branch=master
+    :target: https://travis-ci.org/thisfred/val
+
+.. image:: https://coveralls.io/repos/thisfred/val/badge.png?branch=master
+    :target: https://coveralls.io/r/thisfred/val
+
+
     .. image:: http://thisfred.github.io/val.jpg
 
 A validator for arbitrary Python objects. Works with Python 2 and 3.
