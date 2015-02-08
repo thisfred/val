@@ -6,9 +6,7 @@ Eric Casteleijn, <thisfred@gmail.com>
 Vladimir Keleshev, <vladimir@keleshev.com>
 """
 
-import doctest
 import pytest
-import re
 import sys
 from val import (
     And, BaseSchema, Convert, NotValid, Optional, Or, Ordered, Schema)
