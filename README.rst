@@ -43,10 +43,11 @@ The schemas understood by val are very similar to the ones in schema_ , but not
 
 .. note::
 
-    To support both Python 2 and 3 with a single code base, I have had to
-    take out the Exception tracebacks, since there is no way to make them
-    look the same for both versions. I have kept the Python3 versions around
-    as comments where I thought they would be illuminating.
+    The doctests will only work under Python 3, but for fairly trivial reasons.
+    All other tests are run against current versions of both Python 2 and 3, 
+    and cover 100% of the code, so you should feel safe to use this with
+    either.
+
 
 Syntax
 ~~~~~~
