@@ -3,10 +3,8 @@ val
 
 .. image:: https://travis-ci.org/thisfred/val.svg?branch=master
     :target: https://travis-ci.org/thisfred/val
-
-.. image:: https://coveralls.io/repos/thisfred/val/badge.png?branch=master
-    :target: https://coveralls.io/r/thisfred/val
-
+.. image:: https://coveralls.io/repos/thisfred/val/badge.svg?branch=master
+  :target: https://coveralls.io/r/thisfred/val?branch=master
 
     .. image:: http://thisfred.github.io/val.jpg
 
