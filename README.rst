@@ -6,10 +6,9 @@ val
 .. image:: https://coveralls.io/repos/thisfred/val/badge.svg?branch=master
     :target: https://coveralls.io/r/thisfred/val?branch=master
 
+A validator for arbitrary Python objects. Works with Python 2 and 3.
 
 .. image:: http://thisfred.github.io/val.jpg
-
-A validator for arbitrary Python objects. Works with Python 2 and 3.
 
 Inspired by some of the wonderful ideas in schema_ and flatland_, many of which
 I outright stole.
