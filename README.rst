@@ -1,6 +1,8 @@
 val
 ===
 
+    .. image:: http://thisfred.github.io/val.jpg
+
 A validator for arbitrary Python objects. Works with Python 2 and 3.
 
 Inspired by some of the wonderful ideas in schema_ and flatland_, many of which
@@ -44,7 +46,7 @@ The schemas understood by val are very similar to the ones in schema_ , but not
     To support both Python 2 and 3 with a single code base, I have had to
     take out the Exception tracebacks, since there is no way to make them
     look the same for both versions. I have kept the Python3 versions around
-    as comments where I thougt they would be illuminating.
+    as comments where I thought they would be illuminating.
 
 Syntax
 ~~~~~~
