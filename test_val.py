@@ -7,14 +7,27 @@ Vladimir Keleshev, <vladimir@keleshev.com>
 """
 
 import doctest
-from val import NotValid, Optional, Or, And, Schema, Convert, Ordered
 import pytest
+import re
 import sys
+from val import (
+    And, BaseSchema, Convert, NotValid, Optional, Or, Ordered, Schema)
 
 if sys.version_info[0] == 3:
     TYPE_OR_CLASS = 'class'
 else:
     TYPE_OR_CLASS = 'type'
+
+
+def test_must_implement_validated():
+
+    class Broken(BaseSchema):
+
+        """Broken schema subclass."""
+
+    schema = Broken()
+    with pytest.raises(NotImplementedError):
+        schema.validate("whatever")
 
 
 def test_identity():

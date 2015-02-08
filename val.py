@@ -8,8 +8,7 @@ Eric Casteleijn, <thisfred@gmail.com>
 from warnings import warn
 
 
-__version__ = '0.5.2'
-
+__version__ = '0.5.3'
 NOT_SUPPLIED = object()
 
 
@@ -63,8 +62,8 @@ def build_callable_validator(function):
             if function(data):
                 return data
 
-        except (TypeError, ValueError, NotValid) as e:
-            raise NotValid(', '.join(e.args))
+        except (TypeError, ValueError, NotValid) as ex:
+            raise NotValid(', '.join(ex.args))
 
         raise NotValid("%r not validated by '%s'" % (data, get_repr(function)))
 
@@ -131,8 +130,8 @@ def _validate_mandatory_keys(mandatory, validated, data, to_validate):
             raise NotValid('missing key: %r' % (key,))
         try:
             validated[key] = sub_schema(data[key])
-        except NotValid as e:
-            raise NotValid('%r: %s' % (key, ', '.join(e.args)))
+        except NotValid as ex:
+            raise NotValid('%r: %s' % (key, ', '.join(ex.args)))
         to_validate.remove(key)
 
 
@@ -140,8 +139,8 @@ def _validate_optional_key(key, missing, value, defaults, validated, optional):
     """Validate an optional key."""
     try:
         validated[key] = optional[key](value)
-    except NotValid as e:
-        raise NotValid('%r: %s' % (key, ', '.join(e.args)))
+    except NotValid as ex:
+        raise NotValid('%r: %s' % (key, ', '.join(ex.args)))
     if key in missing:
         _, null_values = defaults[key]
         if null_values is not NOT_SUPPLIED:
@@ -239,7 +238,12 @@ class BaseSchema(object):
         except NotValid:
             return False
 
+    def _validated(self, data):
+        """Return validated data."""
+        raise NotImplementedError
+
     def validate(self, data):
+        """Validate data. Raise NotValid error for invalid data."""
         validated = self._validated(data)
         for validator in self.additional_validators:
             if not validator(validated):
@@ -297,8 +301,8 @@ class Or(BaseSchema):
         for sub in self.schemas:
             try:
                 return sub(data)
-            except NotValid as e:
-                errors.extend(e.args)
+            except NotValid as ex:
+                errors.extend(ex.args)
 
         raise NotValid(', '.join(errors))
 
@@ -337,8 +341,8 @@ class Convert(BaseSchema):
         """Convert data or die trying."""
         try:
             return self.convert(data)
-        except (TypeError, ValueError) as e:
-            raise NotValid(', '.join(e.args))
+        except (TypeError, ValueError) as ex:
+            raise NotValid(', '.join(ex.args))
 
     def __repr__(self):
         return '<Convert: %r>' % (self.convert,)
