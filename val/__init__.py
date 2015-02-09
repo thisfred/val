@@ -8,7 +8,7 @@ Eric Casteleijn, <thisfred@gmail.com>
 from warnings import warn
 
 
-__version__ = '0.5.4'
+__version__ = '0.6'
 NOT_SUPPLIED = object()
 
 
@@ -65,7 +65,7 @@ def build_callable_validator(function):
         except (TypeError, ValueError, NotValid) as ex:
             raise NotValid(', '.join(ex.args))
 
-        raise NotValid("%r not validated by '%s'" % (data, get_repr(function)))
+        raise NotValid("%r invalidated by '%s'" % (data, get_repr(function)))
 
     return callable_validator
 
@@ -83,7 +83,7 @@ def build_iterable_validator(iterable):
             except NotValid:
                 pass
 
-        raise NotValid('%r not validated by anything in %s.' % (
+        raise NotValid('%r invalidated by anything in %s.' % (
             value, iterable))
 
     def iterable_validator(data):
@@ -105,8 +105,8 @@ def _determine_keys(dictionary):
     for key, value in dictionary.items():
         if isinstance(key, Optional):
             optional[key.value] = parse_schema(value)
-            if isinstance(value, BaseSchema)\
-                    and value.default is not NOT_SUPPLIED:
+            if isinstance(value, BaseSchema) and\
+                    value.default is not NOT_SUPPLIED:
                 defaults[key.value] = (value.default, value.null_values)
             elif key.default is not NOT_SUPPLIED:
                 warn(
@@ -229,6 +229,7 @@ class BaseSchema(object):
         self.additional_validators = additional_validators or []
         self.default = default
         self.null_values = null_values
+        self.annotations = {}
 
     def validates(self, data):
         """Return True if schema validates data, False otherwise."""
@@ -248,7 +249,7 @@ class BaseSchema(object):
         for validator in self.additional_validators:
             if not validator(validated):
                 raise NotValid(
-                    "%s not validated by additional validator '%s'" % (
+                    "%s invalidated by '%s'" % (
                         validated, get_repr(validator)))
 
         if not (self.default is NOT_SUPPLIED or validated):
@@ -263,11 +264,16 @@ class Schema(BaseSchema):
 
     def __init__(self, schema, **kwargs):
         super(Schema, self).__init__(**kwargs)
-        self._orig_schema = schema
+        self._definition = schema
         self.schema = parse_schema(schema)
 
+    @property
+    def definition(self):
+        """Definition with which this schema was initialized."""
+        return self._definition
+
     def __repr__(self):
-        return repr(self._orig_schema)
+        return repr(self.definition)
 
     def _validated(self, data):
         return self.schema(data)
@@ -354,7 +360,7 @@ class Ordered(BaseSchema):
 
     def __init__(self, schemas, **kwargs):
         super(Ordered, self).__init__(**kwargs)
-        self._orig_schema = schemas
+        self._definition = schemas
         self.schemas = type(schemas)(Schema(s) for s in schemas)
         self.length = len(self.schemas)
 

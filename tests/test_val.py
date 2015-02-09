@@ -42,6 +42,7 @@ def test_non_identity():
 def test_type_check():
     schema = Schema(str)
     assert schema.validate('test') == 'test'
+    assert schema.validates('')
 
 
 def test_failing_type_check():
@@ -240,7 +241,7 @@ def test_callable_gives_readable_error():
     with pytest.raises(NotValid) as ctx:
         schema.validate(12)
     assert ctx.value.args == (
-        "12 not validated by 'Must be less than two.'",)
+        "12 invalidated by 'Must be less than two.'",)
 
 
 def test_callable_gives_sensible_error():
@@ -251,7 +252,7 @@ def test_callable_gives_sensible_error():
     schema = Schema(less_than_two)
     with pytest.raises(NotValid) as ctx:
         schema.validate(12)
-    assert ctx.value.args == ("12 not validated by 'less_than_two'",)
+    assert ctx.value.args == ("12 invalidated by 'less_than_two'",)
 
 
 def test_convert():
@@ -445,10 +446,21 @@ def test_schema_with_additional_validators():
     with pytest.raises(NotValid) as ctx:
         schema.validate({'foo': 5, 'bar': 7})
     assert ctx.value.args[0].endswith(
-        "not validated by additional validator 'foo + bar > 12.'")
+        "invalidated by 'foo + bar > 12.'")
 
 
 def test_uses_default_value_to_replace_falsy_values():
     schema = Schema(
         {object: object}, default={'foo': 'bar'})
     assert schema.validate({}) == {'foo': 'bar'}
+
+
+def test_can_see_definition():
+    schema = Schema({"foo": "bar"})
+    assert schema.definition == {"foo": "bar"}
+
+
+def test_cannot_change_definition():
+    schema = Schema({"foo": "bar"})
+    with pytest.raises(AttributeError):
+        schema.definition = {"qux": "baz"}
