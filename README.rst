@@ -453,8 +453,8 @@ validators.
     val.NotValid: ... invalidated by 'The total sum must not exceed 500.'
 
 
-Serializing Schemas (in flux)
------------------------------
+Serializing Schemas
+-------------------
 
 When your application receives JSON from clients, it can be useful to define
 explicit schemas that those clients have to abide by. Pointing to source code 
@@ -464,8 +464,8 @@ developing in Python. For this purpose, teleport_, a lightweight JSON format to
 describe schemas, is better suited.
 
 A subset of valid val schemas is serializable/exportable to teleport_. 
-Note that things like defaul values and additional validators will be lost when
-serializing to teleport, because it has no way to express them.
+Note that things like default values and additional validators will be lost
+when serializing to teleport, because it has no way to express them.
 
 Combining doctests with this serialization provides a way to specify what your
 application considers valid, and verify in your tests that you didn't
@@ -481,7 +481,7 @@ If your code contains the following schema for todo items:
     ...     Optional("status"): str})
 
 Then in your API documentation you could use the ``document()`` helper and
-use doctests to verify the output, as it is here.
+have doctests verify the output, as is the case here.
 
 .. code:: python
 
