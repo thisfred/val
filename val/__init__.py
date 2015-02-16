@@ -5,11 +5,8 @@ Copyright (c) 2013-2014
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-from warnings import warn
-
-
-__version__ = '0.6'
-NOT_SUPPLIED = object()
+__version__ = '0.7'
+UNSPECIFIED = object()
 
 
 class NotValid(Exception):
@@ -106,13 +103,8 @@ def _determine_keys(dictionary):
         if isinstance(key, Optional):
             optional[key.value] = parse_schema(value)
             if isinstance(value, BaseSchema) and\
-                    value.default is not NOT_SUPPLIED:
+                    value.default is not UNSPECIFIED:
                 defaults[key.value] = (value.default, value.null_values)
-            elif key.default is not NOT_SUPPLIED:
-                warn(
-                    "Defaults should be specified on the value rather than in"
-                    "Optional", DeprecationWarning, stacklevel=2)
-                defaults[key.value] = (key.default, key.null_values)
             continue  # pragma: nocover
 
         if type(key) is type:
@@ -135,17 +127,13 @@ def _validate_mandatory_keys(mandatory, validated, data, to_validate):
         to_validate.remove(key)
 
 
-def _validate_optional_key(key, missing, value, defaults, validated, optional):
+def _validate_optional_key(key, missing, value, validated, optional):
     """Validate an optional key."""
     try:
         validated[key] = optional[key](value)
     except NotValid as ex:
         raise NotValid('%r: %s' % (key, ', '.join(ex.args)))
     if key in missing:
-        _, null_values = defaults[key]
-        if null_values is not NOT_SUPPLIED:
-            if validated[key] in null_values:
-                return
         missing.remove(key)
 
 
@@ -164,14 +152,13 @@ def _validate_type_key(key, value, types, validated):
         raise NotValid('%r: %r not matched' % (key, value))
 
 
-def _validate_other_keys(optional, types, missing, defaults, validated, data,
+def _validate_other_keys(optional, types, missing, validated, data,
                          to_validate):
     """Validate the rest of the keys present in the data."""
     for key in to_validate:
         value = data[key]
         if key in optional:
-            _validate_optional_key(
-                key, missing, value, defaults, validated, optional)
+            _validate_optional_key(key, missing, value, validated, optional)
             continue
         _validate_type_key(key, value, types, validated)
 
@@ -190,7 +177,7 @@ def build_dict_validator(dictionary):
         to_validate = list(data.keys())
         _validate_mandatory_keys(mandatory, validated, data, to_validate)
         _validate_other_keys(
-            optional, types, missing, defaults, validated, data, to_validate)
+            optional, types, missing, validated, data, to_validate)
         for key in missing:
             validated[key] = defaults[key][0]
 
@@ -224,8 +211,8 @@ class BaseSchema(object):
 
     """Base class for all Schema objects."""
 
-    def __init__(self, additional_validators=None, default=NOT_SUPPLIED,
-                 null_values=NOT_SUPPLIED):
+    def __init__(self, additional_validators=None, default=UNSPECIFIED,
+                 null_values=UNSPECIFIED):
         self.additional_validators = additional_validators or []
         self.default = default
         self.null_values = null_values
@@ -252,7 +239,14 @@ class BaseSchema(object):
                     "%s invalidated by '%s'" % (
                         validated, get_repr(validator)))
 
-        if not (self.default is NOT_SUPPLIED or validated):
+        if self.default is UNSPECIFIED:
+            return validated
+
+        if self.null_values is not UNSPECIFIED\
+                and validated in self.null_values:
+            return self.default
+
+        if validated is None:
             return self.default
 
         return validated
@@ -283,10 +277,8 @@ class Optional(object):
 
     """Optional key in a dictionary."""
 
-    def __init__(self, value, null_values=NOT_SUPPLIED, default=NOT_SUPPLIED):
+    def __init__(self, value):
         self.value = value
-        self.null_values = null_values
-        self.default = default
 
     def __repr__(self):
         return "<Optional: %r>" % (self.value,)

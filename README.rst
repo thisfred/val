@@ -389,32 +389,20 @@ Default Values
 --------------
 
 One can supply a default value to any (subclass of) Schema, which will be used
-in place of the validated value if that evaluates to `False`.
+in place of the validated value if that value was `None`.
 
 .. code:: python
 
-    >>> schema = Schema(str, default='default value')
+    >>> schema = Schema(Or(str, None), default='default value')
     >>> schema.validate('supplied value')
     'supplied value'
 
     >>> schema.validate('')
-    'default value'
+    ''
 
-Note that the original value must still be valid for the schema, so this will
-not work:
-
-.. code:: python
-
-    >>> schema.validates(None)
-    False
-
-But this will:
-
-.. code:: python
-
-    >>> schema = Or(str, None, default='default value')
     >>> schema.validate(None)
     'default value'
+
 
 Default values will also work for dictionary keys that are specified as
 `Optional`:

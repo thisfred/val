@@ -73,38 +73,34 @@ def test_dictionary_optional_repr():
     assert "'key': <%s 'str'>" % TYPE_OR_CLASS in str(schema)
 
 
-def test_dictionary_optional_missing():
-    schema = Schema({'key': str, Optional('key2', default='val2'): str})
-    assert schema.validate(
-        {'key': 'val'}) == {'key': 'val', 'key2': 'val2'}
-
-
 def test_dictionary_optional_with_default_on_value():
     schema = Schema({
         'key': str,
         Optional('key2'): Schema(str, default='val2')})
-    assert schema.validate(
-        {'key': 'val'}) == {'key': 'val', 'key2': 'val2'}
+    assert schema.validate({'key': 'val'}) == {'key': 'val', 'key2': 'val2'}
+
+
+def test_dictionary_optional_with_null_values():
+    schema = Schema({
+        Optional('key2'): Schema(str, default='val2', null_values=('',))})
+    assert schema.validate({'key2': ''}) == {'key2': 'val2'}
+
+
+def test_dictionary_missing_with_null_values():
+    schema = Schema({
+        Optional('key2'): Schema(str, default='val2', null_values=('',))})
+    assert schema.validate({}) == {'key2': 'val2'}
 
 
 def test_regression_validating_twice_works():
     schema = Schema({
         'key': str,
-        Optional('key2', default='val2', null_values=(None,)): Or(str, None)})
+        Optional('key2'): Or(str, None, default='val2', null_values=(None,))})
     assert (
         schema.validate({'key': 'val', 'key2': 'other_val'}) ==
         {'key': 'val', 'key2': 'other_val'})
     assert schema.validate(
         {'key': 'new_val'}) == {'key': 'new_val', 'key2': 'val2'}
-
-
-def test_dictionary_optional_with_null_value():
-    schema = Schema({
-        'key': str,
-        Optional('key2', default='val2', null_values=(None,)): Or(str, None)})
-    assert (
-        schema.validate({'key': 'val', 'key2': None}) ==
-        {'key': 'val', 'key2': 'val2'})
 
 
 def test_dictionary_optional_with_null_value_on_value_schema():
@@ -119,10 +115,10 @@ def test_dictionary_optional_with_null_value_on_value_schema():
 def test_dictionary_optional_not_missing():
     schema = Schema({
         'key': str,
-        Optional('key2', default='val2'): Or(str, None)})
+        Optional('key2'): Or(str, None, default='val2')})
     assert schema.validate({
         'key': 'val',
-        'key2': None}) == {'key': 'val', 'key2': None}
+        'key2': None}) == {'key': 'val', 'key2': 'val2'}
 
 
 def test_dictionary_optional_with_default_on_value_not_missing():
@@ -449,10 +445,22 @@ def test_schema_with_additional_validators():
         "invalidated by 'foo + bar > 12.'")
 
 
-def test_uses_default_value_to_replace_falsy_values():
+def test_does_not_use_default_value_to_replace_falsy_values():
     schema = Schema(
         {object: object}, default={'foo': 'bar'})
+    assert schema.validate({}) == {}
+
+
+def test_uses_default_value_when_explicitly_told_to():
+    schema = Schema(
+        {object: object}, default={'foo': 'bar'}, null_values=({},))
     assert schema.validate({}) == {'foo': 'bar'}
+
+
+def test_uses_default_value_to_replace_missing_values():
+    schema = Schema(
+        Or({object: object}, None), default={'foo': 'bar'})
+    assert schema.validate(None) == {'foo': 'bar'}
 
 
 def test_can_see_definition():
