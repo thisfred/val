@@ -10,23 +10,62 @@ A validator for arbitrary Python objects. Works with Python 2 and 3.
 
 .. image:: http://thisfred.github.io/val.jpg
 
-Inspired by some of the wonderful ideas in schema_ and flatland_, many of which
-I outright stole.
+Inspired by some of the wonderful ideas in schema_ many of which I outright
+stole.
 
-The goal is to make validation faster than either, while keeping the very
-pythonic and minimal style of schema_ , at the expense of more advanced
-features.
+The goal is to make validation faster than it is in schema_, while retaining
+its very pythonic and minimal style, at the expense of more advanced features.
 
-Current status is: used in production code, but only in one place that I know
-of.
+The main use case for val is to provide validation of JSON objects at the API
+level, and to facilitate writing testable documentation for the benefit of
+consumers of that API.
 
-I have not optimized much, but for the kind of schemas I need (specifically: to
-validate JSON that has been loaded into python structures as part of a REST
-API,) I have some anecdotal evidence that it's around ten times faster than
-both schema and flatland. (Again, that is mostly because it does way less.)
 
-The schemas understood by val are very similar to the ones in schema_ , but not
-100% compatible.
+Overview
+~~~~~~~~
+
+Schema's in val are objects with at least two methods, `validates()` and
+`validate()`. A schema is defined in Python code that resembles the structure
+of the objects it is meant to validate as closely as possible.
+
+So, if our API expects todo items that have a `task` and a `status` key, its
+schema might look like:
+
+.. code:: python
+
+    >>> from val import Schema
+    >>> todo_schema = Schema({
+    ...     'task': str,
+    ...     'status': str})
+
+The `validates()` method can be used to determine whether or not an object
+satisfies the schema, and returns True if it does, and False if not:
+
+.. code:: python
+
+    >>> todo = {
+    ...     'task': 'shave yak',
+    ...     'status': 'blocked'}
+    >>> todo_schema.validates(todo)
+    True
+    >>> invalid_todo = {
+    ...     'task': 'paint shed',
+    ...     'status': 12}
+    >>> todo_schema.validates(invalid_todo)
+    False
+
+While in some cases this would be sufficient, usually, it's helpful to have
+more detailed feedback as to why an object failed to validate. In these cases,
+you can use `validate()`, which returns the validated object if all went well,
+and raises a NotValid exception with more details otherwise:
+
+.. code:: python
+
+    >>> validated = todo_schema.validate(todo)  # this works
+    >>> valideted = todo_schema.validate(invalid_todo)  # this raises NotValid
+    Traceback (most recent call last):
+       ...
+    val.NotValid: 'status': 12 is not of type <class 'str'>
 
 
 Syntax
@@ -42,7 +81,6 @@ Simple literal values will match equal values:
 
 .. code:: python
 
-    >>> from val import Schema
     >>> Schema(12).validates(12)
     True
 
@@ -489,5 +527,4 @@ have doctests verify the output, as is the case here.
 
 
 .. _schema: https://github.com/halst/schema
-.. _flatland: http://discorporate.us/projects/flatland/
 .. _teleport: http://www.teleport-json.org/
