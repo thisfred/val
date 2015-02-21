@@ -5,7 +5,7 @@ Copyright (c) 2013-2014
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
-__version__ = '0.7'
+__version__ = '0.8dev'
 UNSPECIFIED = object()
 
 
@@ -308,6 +308,10 @@ class Or(BaseSchema):
         return "<%s>" % (" or ".join(["%r" % (v,) for v in self.values]),)
 
 
+def nullable(schema, default=UNSPECIFIED):
+    return Or(None, schema, default=default)
+
+
 class And(BaseSchema):
 
     """Validates if all of the subschemas do."""
@@ -348,7 +352,7 @@ class Convert(BaseSchema):
 
 class Ordered(BaseSchema):
 
-    """Validate an ordered iterable."""
+    """Validates an ordered iterable."""
 
     def __init__(self, schemas, **kwargs):
         super(Ordered, self).__init__(**kwargs)

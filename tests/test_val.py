@@ -9,7 +9,8 @@ Vladimir Keleshev, <vladimir@keleshev.com>
 import pytest
 import sys
 from val import (
-    And, BaseSchema, Convert, NotValid, Optional, Or, Ordered, Schema)
+    nullable, And, BaseSchema, Convert, NotValid, Optional, Or, Ordered,
+    Schema)
 
 if sys.version_info[0] == 3:
     TYPE_OR_CLASS = 'class'
@@ -185,6 +186,20 @@ def test_or_repr():
     schema = Or(1, str, Convert(int))
     assert str(schema).startswith(
         "<1 or <%s 'str'> or <Convert: <%s " % (TYPE_OR_CLASS, TYPE_OR_CLASS))
+
+
+def test_nullable():
+    schema = nullable(str)
+    assert schema.validates(None)
+    assert schema.validates('foo')
+    assert not schema.validates(12)
+
+
+def test_nullable_with_default():
+    schema = nullable(str, default='foo')
+    assert schema.validate(None) == 'foo'
+    assert schema.validate('') == ''
+    assert schema.validate('bar') == 'bar'
 
 
 def test_and():

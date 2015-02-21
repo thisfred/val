@@ -152,6 +152,18 @@ see `Ordered()`_):
     >>> schema.validates(['bar', 'bar', 13, 'bar'])
     True
 
+A special shortcut exists for a very common pattern where a value is either of
+a certain type, or None:
+
+.. code:: python
+
+    >>> from val import nullable
+    >>> schema = Schema({'name': nullable(str)})
+    >>> schema.validates({'name': 'Grace'})
+    True
+    >>> schema.validates({'name': None})
+    True
+
 
 Dictionaries
 ------------
