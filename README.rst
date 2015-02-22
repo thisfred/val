@@ -24,11 +24,11 @@ consumers of that API.
 Overview
 ~~~~~~~~
 
-Schema's in val are objects with at least two methods, `validates()` and
-`validate()`. A schema is defined in Python code that resembles the structure
+Schemas in val are objects with at least two methods, ``validates()`` and
+``validate()``. A schema is defined in Python code that resembles the structure
 of the objects it is meant to validate as closely as possible.
 
-So, if our API expects todo items that have a `task` and a `status` key, its
+So, if our API expects todo items that have a ``task`` and a `status`` key, its
 schema might look like:
 
 .. code:: python
@@ -38,7 +38,7 @@ schema might look like:
     ...     'task': str,
     ...     'status': str})
 
-The `validates()` method can be used to determine whether or not an object
+The ``validates()`` method can be used to determine whether or not an object
 satisfies the schema, and returns True if it does, and False if not:
 
 .. code:: python
@@ -56,7 +56,7 @@ satisfies the schema, and returns True if it does, and False if not:
 
 While in some cases this would be sufficient, usually, it's helpful to have
 more detailed feedback as to why an object failed to validate. In these cases,
-you can use `validate()`, which returns the validated object if all went well,
+you can use ``validate()``, which returns the validated object if all went well,
 and raises a NotValid exception with more details otherwise:
 
 .. code:: python
@@ -64,7 +64,7 @@ and raises a NotValid exception with more details otherwise:
     >>> validated = todo_schema.validate(todo)  # this works
     >>> valideted = todo_schema.validate(invalid_todo)  # this raises NotValid
     Traceback (most recent call last):
-       ...
+        ...
     val.NotValid: 'status': 12 is not of type <class 'str'>
 
 
@@ -184,17 +184,17 @@ not missing any of the keys specified (unless they are specified as
 
     >>> schema.validate({'foo': 'bar'})
     Traceback (most recent call last):
-         ...
+        ...
     val.NotValid: 'foo': 'bar' is not of type <class 'int'>
 
     >>> schema.validate({'qux': 19})
     Traceback (most recent call last):
-       ...
+        ...
     val.NotValid: missing key: 'foo'
 
     >>> schema.validate({'foo': 21, 12: 'bar'})
     Traceback (most recent call last):
-       ...
+        ...
     val.NotValid: 12: 'bar' not matched
 
 
@@ -439,7 +439,7 @@ Default Values
 --------------
 
 One can supply a default value to any (subclass of) Schema, which will be used
-in place of the validated value if that value was `None`.
+in place of the validated value if that value was ``None``.
 
 .. code:: python
 
@@ -455,7 +455,7 @@ in place of the validated value if that value was `None`.
 
 
 Default values will also work for dictionary keys that are specified as
-`Optional`:
+``Optional``:
 
 .. code:: python
 

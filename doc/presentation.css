@@ -1,0 +1,40 @@
+body {
+    font-size: 150%;
+    font-family: Ubuntu;
+}
+
+pre {
+    font-family: Ubuntu Mono,monospace;
+}
+
+p {
+    font-size: 125%;
+    font-weight: normal;
+    margin-bottom: 0.3em;
+    margin-top: 0.3em;
+}
+
+h1, h2, h3, h4 {
+    font-weight: normal;
+    margin-bottom: 0.3em;
+    margin-top: 0.3em;
+}
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
+.footnote {
+    font-size: 60%;
+}
+
+.footnoteref {
+    font-size: 60%;
+    vertical-align: super;
+}
+
+.footnotereturn {
+    float: left;
+    margin-right: 5px;
+}
