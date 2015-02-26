@@ -16,6 +16,7 @@ Eric Casteleijn
 
 thisfred@gmail.com | ericc@simple.com | @thisfred
 
+
 ----
 
 Let's say we have a REST application for storing and managing todo items.
@@ -39,7 +40,7 @@ Straw Man example:
             raise BadRequest("Missing field 'task'.")
 
         value = todo['task']
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise BadRequest("Value of field 'task' is of wrong type.")
 
         if 'priority' not in todo:
@@ -49,13 +50,11 @@ Straw Man example:
         if not isinstance(value, int):
             raise BadRequest("Value of field 'priority' is of wrong type.")
 
-        # Actually do something with todo.
+        # Actually do something with `todo`.
 
-Now do the same with small variations for PUT, DELETE, and any other endpoints
-that accept (lists of) the same type. 
-
-Then do the same for all other objects your application needs to be able to
-receive as JSON objects.
+And now do the same with small variations for PUT, DELETE, and any other
+endpoints that accept (lists of) the same type. And then for all other types of
+objects your application needs to be able to understand.
 
 ----
 
@@ -63,20 +62,20 @@ Same functionality using val:
 
 .. code:: python
 
-    todo_schema = Schema({
+    TODO_SCHEMA = Schema({
         'task': str,
         'priority': int})
 
     def post_todo(request):
         try:
-            todo = todo_schema.validate(request.json)
+            todo = TODO_SCHEMA.validate(request.json)
         except NotValid as ex:
             raise BadRequest.from(ex)
-        # Actually do something with todo.
+        # Actually do something with `todo`.
 
-Less logic, less repetition within handlers.
-
-Reusable and composable schemas.
+- Declare schemas in a way that resembles valid input.
+- Less logic, less repetition within handlers.
+- Reusable and composable schemas.
 
 ----
 
@@ -96,11 +95,11 @@ Can be further refactored, for instance:
 
     class TodoHandler(HandlerBase):
 
-        schema = todo_schema
+        schema = TODO_SCHEMA
 
         def handle(request):
-            validated = self.get_validated_json(request.json)
-            # Actually do something with todo.
+            todo = self.get_validated_json(request.json)
+            # Actually do something with `todo`.
 
 ----
 
@@ -151,11 +150,8 @@ code through doctests:
 
 ----
 
-Roadmap
--------
-
-Automated backwards compatibility checking. (Could look something like this.
-100% hand waving.)
+Roadmap: Automated backwards compatibility checking. (Could look something like
+this.  100% hand waving.)
 
 .. code:: python
 
