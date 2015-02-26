@@ -4,7 +4,7 @@ import json
 from decimal import Decimal
 from val import BaseSchema, Optional, Or, Schema
 from sys import version_info
-from strict_rfc3339 import validate_rfc3339
+from pyrfc3339 import parse as rfc3339
 
 
 PYTHON_VERSION = version_info[0]
@@ -46,8 +46,7 @@ VAL_PRIMITIVES = {
     is_jsonable: "JSON",
     is_valid_teleport: "Schema",
     str: "String",
-    validate_rfc3339: "DateTime",
-}
+    rfc3339: "DateTime"}
 
 
 class SerializationError(Exception):
@@ -70,7 +69,7 @@ PRIMITIVES = {
     'Boolean': bool,
     'String': STRING,
     'JSON': is_jsonable,
-    'DateTime': validate_rfc3339,
+    'DateTime': rfc3339,
     'Schema': is_valid_teleport}
 
 

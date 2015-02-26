@@ -2,7 +2,7 @@
 
 import json
 import pytest
-from strict_rfc3339 import validate_rfc3339
+from pyrfc3339 import parse as rfc3339
 from val import Schema, Optional, Or
 from val.tp import (
     DeserializationError,
@@ -47,7 +47,7 @@ def test_serialize_to_teleport():
     todo = Schema({
         "task": str,
         Optional("priority"): int,
-        Optional("deadline"): validate_rfc3339})
+        Optional("deadline"): rfc3339})
     assert from_val(todo) == {
         "Struct": {
             "required": {"task": "String"},

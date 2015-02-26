@@ -1,3 +1,4 @@
 pytest-cov
 flake8
 coveralls
+schema

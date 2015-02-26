@@ -1,2 +1,2 @@
 teleport
-strict-rfc3339
+pyRFC3339>=0.2
