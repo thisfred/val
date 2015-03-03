@@ -1,7 +1,7 @@
 """
 val: A validator for arbitrary python objects.
 
-Copyright (c) 2013-2014
+Copyright (c) 2013-2015
 Eric Casteleijn, <thisfred@gmail.com>
 """
 from setuptools import setup

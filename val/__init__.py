@@ -1,7 +1,7 @@
 """
 val: A validator for arbitrary python objects.
 
-Copyright (c) 2013-2014
+Copyright (c) 2013-2015
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
@@ -80,8 +80,7 @@ def build_iterable_validator(iterable):
             except NotValid:
                 pass
 
-        raise NotValid('%r invalidated by anything in %s.' % (
-            value, iterable))
+        raise NotValid('%r invalidated by anything in %s.' % (value, iterable))
 
     def iterable_validator(data):
         """Validate an iterable."""
@@ -213,6 +212,7 @@ class BaseSchema(object):
 
     def __init__(self, additional_validators=None, default=UNSPECIFIED,
                  null_values=UNSPECIFIED):
+        """Fallback constructor."""
         self.additional_validators = additional_validators or []
         self.default = default
         self.null_values = null_values
@@ -278,6 +278,7 @@ class Optional(object):
     """Optional key in a dictionary."""
 
     def __init__(self, value):
+        """Optional key in a dictionary."""
         self.value = value
 
     def __repr__(self):
@@ -309,6 +310,7 @@ class Or(BaseSchema):
 
 
 def nullable(schema, default=UNSPECIFIED):
+    """Create a nullable version of schema."""
     return Or(None, schema, default=default)
 
 
@@ -336,6 +338,7 @@ class Convert(BaseSchema):
     """Convert a value."""
 
     def __init__(self, converter, **kwargs):
+        """Create schema from a conversion function."""
         super(Convert, self).__init__(kwargs)
         self.convert = converter
 
@@ -347,6 +350,7 @@ class Convert(BaseSchema):
             raise NotValid(', '.join(ex.args))
 
     def __repr__(self):
+        """Display schema."""
         return '<Convert: %r>' % (self.convert,)
 
 
@@ -355,6 +359,7 @@ class Ordered(BaseSchema):
     """Validates an ordered iterable."""
 
     def __init__(self, schemas, **kwargs):
+        """Create schema from an ordered iterable."""
         super(Ordered, self).__init__(**kwargs)
         self._definition = schemas
         self.schemas = type(schemas)(Schema(s) for s in schemas)
@@ -370,4 +375,5 @@ class Ordered(BaseSchema):
             self.schemas[i].validate(v) for i, v in enumerate(values))
 
     def __repr__(self):
+        """Display schema."""
         return '<Ordered: %r>' % (self.schemas,)

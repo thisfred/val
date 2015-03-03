@@ -1,0 +1,46 @@
+output_format: json
+
+allow-shorthand: false
+test-warnings: true
+doc-warnings: true
+autodetect: false
+
+ignore-patterns:
+  - (^|/)\..+
+
+pep8:
+  run: true
+  options:
+    max-line-length: 80
+
+mccabe:
+  run: true
+  options:
+    max-complexity: 10
+
+pyroma:
+  run: true
+
+vulture:
+  run: true
+
+dodgy:
+  run: true
+
+pep257:
+  run: true
+  disable:
+    - D102
+    - D103
+    - D202
+  enable:
+    - D000
+
+pyflakes:
+  run: true
+
+pylint:
+  run: true
+  disable:
+    - too-few-public-methods
+    - invalid-name

@@ -13,13 +13,15 @@ A validator for arbitrary Python objects. Works with Python 2 and 3.
 Inspired by some of the wonderful ideas in schema_ many of which I outright
 stole.
 
-The goal is to make validation faster than it is in schema_, while retaining
-its very pythonic and minimal style, at the expense of more advanced features.
+The main use case for val is to provide reasonably fast validation of JSON
+objects at the API level, and to facilitate writing testable documentation for
+the benefit of consumers of that API.
 
-The main use case for val is to provide validation of JSON objects at the API
-level, and to facilitate writing testable documentation for the benefit of
-consumers of that API.
+A brief presentation on val and the ideas behind it can be found at: 
 
+<http://thisfred.github.io/2015-02-26-pdxpython-lightning-talk/>
+
+Filing issues for bugs and questions is highly encouraged.
 
 Overview
 ~~~~~~~~

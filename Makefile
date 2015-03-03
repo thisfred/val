@@ -26,8 +26,8 @@ vpytest:
 vpytest2:
 	. $(ACTIVATE2); py.test -rf -l -s -x  --cov-report term-missing --cov val
 
-lint:
-	flake8 --max-complexity=10 val tests
+lint: venv
+	. $(ACTIVATE); flake8 --max-complexity=10 val tests
 
 test: venv vpytest lint
 
@@ -43,4 +43,3 @@ pytest3:
 	py.test -rf -l -s -x  --cov-report term-missing --doctest-glob=*.rst --cov val
 
 travis: pytest lint
-
