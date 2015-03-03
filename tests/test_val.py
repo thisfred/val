@@ -487,3 +487,10 @@ def test_cannot_change_definition():
     schema = Schema({"foo": "bar"})
     with pytest.raises(AttributeError):
         schema.definition = {"qux": "baz"}
+
+
+def test_captures_multiple_errors():
+    schema = Schema({"foo": str})
+    with pytest.raises(NotValid) as exception:
+        schema.validate({'foo': 12, 'bar': 'qux'})
+    assert len(exception.value.args) == 2

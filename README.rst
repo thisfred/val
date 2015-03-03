@@ -184,11 +184,10 @@ not missing any of the keys specified (unless they are specified as
     >>> schema.validates({'foo': 12, 'bar': 888, 'baz': 299})
     True
 
-    >>> schema.validate({'foo': 'bar'})
+    >>> schema.validate({'foo': 'bar', 'baz': 'qux'})
     Traceback (most recent call last):
         ...
-    val.NotValid: 'foo': 'bar' is not of type <class 'int'>
-
+    val.NotValid: ("'foo': 'bar' is not of type <class 'int'>", "'baz': 'qux' not matched")
     >>> schema.validate({'qux': 19})
     Traceback (most recent call last):
         ...
@@ -286,7 +285,7 @@ elements passed into the Or:
     >>> schema.validate('bar')
     Traceback (most recent call last):
         ...
-    val.NotValid: 'bar' is not equal to 'foo', 'bar' is not of type <class 'int'>
+    val.NotValid: 'bar' is not equal to 'foo' and 'bar' is not of type <class 'int'>
 
 
 And()

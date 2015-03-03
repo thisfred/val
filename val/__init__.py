@@ -60,7 +60,7 @@ def build_callable_validator(function):
                 return data
 
         except (TypeError, ValueError, NotValid) as ex:
-            raise NotValid(', '.join(ex.args))
+            raise NotValid(ex.args)
 
         raise NotValid("%r invalidated by '%s'" % (data, get_repr(function)))
 
@@ -116,14 +116,17 @@ def _determine_keys(dictionary):
 
 def _validate_mandatory_keys(mandatory, validated, data, to_validate):
     """Validate the manditory keys."""
+    errors = []
     for key, sub_schema in mandatory.items():
         if key not in data:
-            raise NotValid('missing key: %r' % (key,))
+            errors.append('missing key: %r' % (key,))
+            continue
         try:
             validated[key] = sub_schema(data[key])
         except NotValid as ex:
-            raise NotValid('%r: %s' % (key, ', '.join(ex.args)))
+            errors.extend(['%r: %s' % (key, arg) for arg in ex.args])
         to_validate.remove(key)
+    return errors
 
 
 def _validate_optional_key(key, missing, value, validated, optional):
@@ -131,9 +134,10 @@ def _validate_optional_key(key, missing, value, validated, optional):
     try:
         validated[key] = optional[key](value)
     except NotValid as ex:
-        raise NotValid('%r: %s' % (key, ', '.join(ex.args)))
+        return ['%r: %s' % (key, arg) for arg in ex.args]
     if key in missing:
         missing.remove(key)
+    return []
 
 
 def _validate_type_key(key, value, types, validated):
@@ -146,20 +150,24 @@ def _validate_type_key(key, value, types, validated):
         except NotValid:
             continue
         else:
-            break
-    else:
-        raise NotValid('%r: %r not matched' % (key, value))
+            return []
+
+    return ['%r: %r not matched' % (key, value)]
 
 
 def _validate_other_keys(optional, types, missing, validated, data,
                          to_validate):
     """Validate the rest of the keys present in the data."""
+    errors = []
     for key in to_validate:
         value = data[key]
         if key in optional:
-            _validate_optional_key(key, missing, value, validated, optional)
+            errors.extend(
+                _validate_optional_key(
+                    key, missing, value, validated, optional))
             continue
-        _validate_type_key(key, value, types, validated)
+        errors.extend(_validate_type_key(key, value, types, validated))
+    return errors
 
 
 def build_dict_validator(dictionary):
@@ -174,9 +182,13 @@ def build_dict_validator(dictionary):
 
         validated = {}
         to_validate = list(data.keys())
-        _validate_mandatory_keys(mandatory, validated, data, to_validate)
-        _validate_other_keys(
-            optional, types, missing, validated, data, to_validate)
+        errors = _validate_mandatory_keys(
+            mandatory, validated, data, to_validate)
+        errors.extend(
+            _validate_other_keys(
+                optional, types, missing, validated, data, to_validate))
+        if errors:
+            raise NotValid(*errors)
         for key in missing:
             validated[key] = defaults[key][0]
 
@@ -233,11 +245,14 @@ class BaseSchema(object):
     def validate(self, data):
         """Validate data. Raise NotValid error for invalid data."""
         validated = self._validated(data)
+        errors = []
         for validator in self.additional_validators:
             if not validator(validated):
-                raise NotValid(
+                errors.append(
                     "%s invalidated by '%s'" % (
                         validated, get_repr(validator)))
+        if errors:
+            raise NotValid(*errors)
 
         if self.default is UNSPECIFIED:
             return validated
@@ -303,7 +318,7 @@ class Or(BaseSchema):
             except NotValid as ex:
                 errors.extend(ex.args)
 
-        raise NotValid(', '.join(errors))
+        raise NotValid(' and '.join(errors))
 
     def __repr__(self):
         return "<%s>" % (" or ".join(["%r" % (v,) for v in self.values]),)
@@ -347,7 +362,7 @@ class Convert(BaseSchema):
         try:
             return self.convert(data)
         except (TypeError, ValueError) as ex:
-            raise NotValid(', '.join(ex.args))
+            raise NotValid(*ex.args)
 
     def __repr__(self):
         """Display schema."""

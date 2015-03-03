@@ -10,8 +10,6 @@ ignore-patterns:
 
 pep8:
   run: true
-  options:
-    max-line-length: 80
 
 mccabe:
   run: true
@@ -44,3 +42,5 @@ pylint:
   disable:
     - too-few-public-methods
     - invalid-name
+    - star-args
+    - line-too-long
