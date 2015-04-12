@@ -31,7 +31,7 @@ lint: venv
 
 test: venv vpytest lint
 
-test2: venv2 vpytest2 lint
+test2: venv2 vpytest2
 
 clean:
 	rm -rf .venv .venv2
@@ -42,4 +42,5 @@ pytest:
 pytest3: 
 	py.test -rf -l -s -x  --cov-report term-missing --doctest-glob=*.rst --cov val
 
-travis: pytest lint
+profile:
+	. $(ACTIVATE); python tests/profiling.py

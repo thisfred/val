@@ -115,12 +115,12 @@ Can be further refactored, for instance:
     >>> todo_schema.validate({'task': 'shave yak'})
     Traceback (most recent call last):
         ...
-    val.NotValid: missing key: 'priority'
+    val.exceptions.NotValid: missing key: 'priority'
 
     >>> todo_schema.validate({'task': 'paint shed', 'priority': 'high'})
     Traceback (most recent call last):
         ...
-    val.NotValid: 'priority': 'high' is not of type <class 'int'>
+    val.exceptions.NotValid: 'priority': 'high' is not of type <class 'int'>
 
 Sensible error messages, that can be forwarded to clients.
 

@@ -67,7 +67,7 @@ and raises a NotValid exception with more details otherwise:
     >>> valideted = todo_schema.validate(invalid_todo)  # this raises NotValid
     Traceback (most recent call last):
         ...
-    val.NotValid: 'status': 12 is not of type <class 'str'>
+    val.exceptions.NotValid: 'status': 12 is not of type <class 'str'>
 
 
 Syntax
@@ -187,16 +187,16 @@ not missing any of the keys specified (unless they are specified as
     >>> schema.validate({'foo': 'bar', 'baz': 'qux'})
     Traceback (most recent call last):
         ...
-    val.NotValid: ("'foo': 'bar' is not of type <class 'int'>", "'baz': 'qux' not matched")
+    val.exceptions.NotValid: ("'foo': 'bar' is not of type <class 'int'>", "'baz': 'qux' not matched")
     >>> schema.validate({'qux': 19})
     Traceback (most recent call last):
         ...
-    val.NotValid: missing key: 'foo'
+    val.exceptions.NotValid: missing key: 'foo'
 
     >>> schema.validate({'foo': 21, 12: 'bar'})
     Traceback (most recent call last):
         ...
-    val.NotValid: 12: 'bar' not matched
+    val.exceptions.NotValid: 12: 'bar' not matched
 
 
 Callables
@@ -215,7 +215,7 @@ result in a NotValid exception:
     >>> schema.validate(10)
     Traceback (most recent call last):
         ...
-    val.NotValid: 10 invalidated by '<lambda>'
+    val.exceptions.NotValid: 10 invalidated by '<lambda>'
 
 To get nicer error messages, use functions rather than lambdas (if the function
 has a doc string it will be used in the error message, otherwise the name of
@@ -234,7 +234,7 @@ the funtion will):
     >>> schema.validate(10)
     Traceback (most recent call last):
         ...
-    val.NotValid: 10 invalidated by 'Must be less than 10.'
+    val.exceptions.NotValid: 10 invalidated by 'Must be less than 10.'
 
 
 Convert()
@@ -263,7 +263,7 @@ etc.):
     >>> schema.validate('foo')
     Traceback (most recent call last):
         ...
-    val.NotValid: invalid literal for int() with base 10: 'foo'
+    val.exceptions.NotValid: invalid literal for int() with base 10: 'foo'
 
 
 Or()
@@ -285,7 +285,7 @@ elements passed into the Or:
     >>> schema.validate('bar')
     Traceback (most recent call last):
         ...
-    val.NotValid: 'bar' is not equal to 'foo' and 'bar' is not of type <class 'int'>
+    val.exceptions.NotValid: 'bar' is not equal to 'foo' and 'bar' is not of type <class 'int'>
 
 
 And()
@@ -307,17 +307,17 @@ the elements passed into the And:
     >>> schema.validate('12')
     Traceback (most recent call last):
         ...
-    val.NotValid: 12 invalidated by '<lambda>'
+    val.exceptions.NotValid: 12 invalidated by '<lambda>'
 
     >>> schema.validate(42.77)
     Traceback (most recent call last):
         ...
-    val.NotValid: 42 invalidated by '<lambda>'
+    val.exceptions.NotValid: 42 invalidated by '<lambda>'
 
     >>> schema.validate('foo')
     Traceback (most recent call last):
         ...
-    val.NotValid: invalid literal for int() with base 10: 'foo'
+    val.exceptions.NotValid: invalid literal for int() with base 10: 'foo'
 
 
 Optional()
@@ -341,12 +341,12 @@ dictionary values with no matching key.
     >>> schema.validate({'foo': 13})
     Traceback (most recent call last):
         ...
-    val.NotValid: 'foo': 13 is not equal to 12
+    val.exceptions.NotValid: 'foo': 13 is not equal to 12
 
     >>> schema.validate({'foo': 'bar'})
     Traceback (most recent call last):
         ...
-    val.NotValid: 'foo': 'bar' is not equal to 12
+    val.exceptions.NotValid: 'foo': 'bar' is not equal to 12
 
 
 Ordered()
@@ -367,12 +367,12 @@ use `Lists`_:
     >>> schema.validate(['fnord', 42, None, 12])
     Traceback (most recent call last):
         ...
-    val.NotValid: 'fnord' is not of type <class 'int'>
+    val.exceptions.NotValid: 'fnord' is not of type <class 'int'>
 
     >>> schema.validate([12, 'fnord', 42, None, 12])
     Traceback (most recent call last):
         ...
-    val.NotValid: [12, 'fnord', 42, None, 12] does not have exactly 4 values. (Got 5.)
+    val.exceptions.NotValid: [12, 'fnord', 42, None, 12] does not have exactly 4 values. (Got 5.)
 
 
 Parsed Schemas
@@ -429,7 +429,7 @@ specify.
     ...     'goldfish': 12})
     Traceback (most recent call last):
          ...
-    val.NotValid: missing key: 'password'
+    val.exceptions.NotValid: missing key: 'password'
 
 
 Advanced Topics
@@ -489,7 +489,7 @@ validators.
     >>> schema.validate({'foo': 250, 'bar': 251})
     Traceback (most recent call last):
          ...
-    val.NotValid: ... invalidated by 'The total sum must not exceed 500.'
+    val.exceptions.NotValid: ... invalidated by 'The total sum must not exceed 500.'
 
 
 Serializing Schemas
