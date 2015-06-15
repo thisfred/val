@@ -8,7 +8,6 @@ venv: requirements.txt
 	test -d .venv || virtualenv -p python3 .venv
 	. $(ACTIVATE); $(REQS)
 	. $(ACTIVATE); $(TESTREQS)
-	. $(ACTIVATE); $(DEVREQS)
 	. $(ACTIVATE); $(INSTALL)
 	touch $(ACTIVATE)
 
@@ -16,7 +15,6 @@ venv2: requirements.txt
 	test -d .venv2 || virtualenv -p python2 .venv2
 	. $(ACTIVATE2); $(REQS)
 	. $(ACTIVATE2); $(TESTREQS)
-	. $(ACTIVATE2); $(DEVREQS)
 	. $(ACTIVATE2); $(INSTALL)
 	touch $(ACTIVATE2)
 

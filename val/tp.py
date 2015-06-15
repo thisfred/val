@@ -2,10 +2,10 @@
 
 import json
 from decimal import Decimal
-from val import BaseSchema, Optional, Or, Schema
 from sys import version_info
-from pyrfc3339 import parse as rfc3339
 
+from pyrfc3339 import parse as rfc3339
+from val import BaseSchema, Optional, Or, Schema
 
 PYTHON_VERSION = version_info[0]
 INTEGER = int if PYTHON_VERSION == 3 else Or(int, long)  # noqa

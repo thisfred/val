@@ -6,11 +6,12 @@ Eric Casteleijn, <thisfred@gmail.com>
 Vladimir Keleshev, <vladimir@keleshev.com>
 """
 
-import pytest
 import sys
+
+import pytest
 from val import (
-    nullable, And, BaseSchema, Convert, NotValid, Optional, Or, Ordered,
-    Schema)
+    And, BaseSchema, Convert, NotValid, Optional, Or, Ordered, Schema,
+    nullable)
 
 if sys.version_info[0] == 3:
     TYPE_OR_CLASS = 'class'

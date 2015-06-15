@@ -22,8 +22,6 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-
 setup(
     name='val',
     version=find_version('val/__init__.py'),
@@ -31,7 +29,7 @@ setup(
     author_email='thisfred@gmail.com',
     description='Python object validator',
     license='BSD',
-    keywords='validation validators',
+    keywords='validation validators REST',
     url='http://github.com/thisfred/val',
     packages=['val'],
     long_description=open('README.rst').read(),

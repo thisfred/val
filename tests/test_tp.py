@@ -1,15 +1,12 @@
 """Tests for integration with teleport."""
 
 import json
+
 import pytest
 from pyrfc3339 import parse as rfc3339
-from val import Schema, Optional, Or
+from val import Optional, Or, Schema
 from val.tp import (
-    DeserializationError,
-    SerializationError,
-    document,
-    to_val,
-    from_val)
+    DeserializationError, SerializationError, document, from_val, to_val)
 
 
 def test_teleport_struct():

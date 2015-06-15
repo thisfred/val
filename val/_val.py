@@ -5,6 +5,8 @@ Copyright (c) 2013-2015
 Eric Casteleijn, <thisfred@gmail.com>
 """
 
+from collections import namedtuple
+
 from val.exceptions import NotValid
 
 __all__ = [
@@ -12,6 +14,32 @@ __all__ = [
     'Schema', 'nullable', 'parse_schema']
 
 UNSPECIFIED = object()
+
+Keys = namedtuple('Keys', ['required', 'optional', 'types', 'defaults'])
+
+
+class Validator(object):
+
+    def __init__(self, validation_function, identity):
+        self.validation_function = validation_function
+        self.identity = identity
+
+    def __call__(self, value):
+        return self.validation_function(value)
+
+    def __eq__(self, other):
+        return self.identity == other.identity
+
+    def is_more_general_than(self, other):
+        if self.identity.__class__ is type:
+            if other.identity.__class__ is type and \
+                    issubclass(other.identity, self.identity):
+                return True
+
+            if isinstance(other.identity, self.identity):
+                return True
+
+        return False
 
 
 def _get_repr(thing):
@@ -32,7 +60,7 @@ def _build_type_validator(value_type):
 
         raise NotValid('%r is not of type %r' % (data, value_type))
 
-    return type_validator
+    return Validator(type_validator, value_type)
 
 
 def _build_static_validator(exact_value):
@@ -45,7 +73,7 @@ def _build_static_validator(exact_value):
 
         raise NotValid('%r is not equal to %r' % (data, exact_value))
 
-    return static_validator
+    return Validator(static_validator, exact_value)
 
 
 def _build_callable_validator(function):
@@ -90,11 +118,11 @@ def _build_iterable_validator(iterable):
     return iterable_validator
 
 
-def _determine_keys(dictionary):
+def determine_keys(dictionary):
     """Determine the different kinds of keys."""
     optional = {}
     defaults = {}
-    mandatory = {}
+    required = {}
     types = {}
     for key, value in dictionary.items():
         if isinstance(key, Optional):
@@ -108,14 +136,15 @@ def _determine_keys(dictionary):
             types[key] = parse_schema(value)
             continue
 
-        mandatory[key] = parse_schema(value)
-    return mandatory, optional, types, defaults
+        required[key] = parse_schema(value)
+    return Keys(
+        required=required, optional=optional, types=types, defaults=defaults)
 
 
-def _validate_mandatory_keys(mandatory, validated, data, to_validate):
+def _validate_required_keys(required, validated, data, to_validate):
     """Validate the manditory keys."""
     errors = []
-    for key, sub_schema in mandatory.items():
+    for key, sub_schema in required.items():
         if key not in data:
             errors.append('missing key: %r' % (key,))
             continue
@@ -170,25 +199,26 @@ def _validate_other_keys(optional, types, missing, validated, data,
 
 def _build_dict_validator(dictionary):
     """Build a validator from a dictionary."""
-    mandatory, optional, types, defaults = _determine_keys(dictionary)
+    keys = determine_keys(dictionary)
 
     def dict_validator(data):
         """Validate dictionaries."""
-        missing = list(defaults.keys())
+        missing = list(keys.defaults.keys())
         if not isinstance(data, dict):
             raise NotValid('%r is not of type dict' % (data,))
 
         validated = {}
         to_validate = list(data.keys())
-        errors = _validate_mandatory_keys(
-            mandatory, validated, data, to_validate)
+        errors = _validate_required_keys(
+            keys.required, validated, data, to_validate)
         errors.extend(
             _validate_other_keys(
-                optional, types, missing, validated, data, to_validate))
+                keys.optional, keys.types, missing, validated, data,
+                to_validate))
         if errors:
             raise NotValid(*errors)
         for key in missing:
-            validated[key] = defaults[key][0]
+            validated[key] = keys.defaults[key][0]
 
         return validated
 
