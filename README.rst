@@ -8,8 +8,6 @@ val
 
 A validator for arbitrary Python objects. Works with Python 2 and 3.
 
-.. image:: http://thisfred.github.io/val.jpg
-
 Inspired by some of the wonderful ideas in schema_ many of which I outright
 stole.
 
@@ -30,7 +28,7 @@ Schemas in val are objects with at least two methods, ``validates()`` and
 ``validate()``. A schema is defined in Python code that resembles the structure
 of the objects it is meant to validate as closely as possible.
 
-So, if our API expects todo items that have a ``task`` and a `status`` key, its
+So, if our API expects todo items that have a ``task`` and a ``status`` key, its
 schema might look like:
 
 .. code:: python
