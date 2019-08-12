@@ -62,7 +62,7 @@ and raises a NotValid exception with more details otherwise:
 .. code:: python
 
     >>> validated = todo_schema.validate(todo)  # this works
-    >>> valideted = todo_schema.validate(invalid_todo)  # this raises NotValid
+    >>> validated = todo_schema.validate(invalid_todo)  # this raises NotValid
     Traceback (most recent call last):
         ...
     val.exceptions.NotValid: 'status': 12 is not of type <class 'str'>
