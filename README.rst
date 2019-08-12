@@ -217,7 +217,7 @@ result in a NotValid exception:
 
 To get nicer error messages, use functions rather than lambdas (if the function
 has a doc string it will be used in the error message, otherwise the name of
-the funtion will):
+the function will):
 
 .. code:: python
 
